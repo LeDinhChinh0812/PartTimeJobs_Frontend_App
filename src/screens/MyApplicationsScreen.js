@@ -18,7 +18,7 @@ import { useNavigation, useFocusEffect } from '@react-navigation/native';
 import { COLORS, TYPOGRAPHY, SPACING } from '../constants';
 import { ApplicationCard, EmptyState } from '../components';
 import { getMyApplications, withdrawApplication, deleteApplication, chatAPI } from '../services';
-import { DEFAULT_PAGE_SIZE } from '../utils/constants';
+import { DEFAULT_PAGE_SIZE, STATUS_MAPPING } from '../utils/constants';
 
 const MyApplicationsScreen = () => {
     const navigation = useNavigation();
@@ -116,50 +116,31 @@ const MyApplicationsScreen = () => {
         try {
             // Debug log
             console.log('=== CHAT BUTTON CLICKED ===');
-            console.log('Application data:', {
-                id: application.id,
-                jobPostId: application.jobPostId,
-                jobTitle: application.jobTitle,
-                employerId: application.employerId,
-                companyName: application.companyName,
-                companyId: application.companyId,
-                allFields: Object.keys(application)
-            });
+            console.log('Application raw data:', JSON.stringify(application, null, 2));
 
-            let employerId = application.employerId;
-            let companyName = application.companyName || 'Nhà tuyển dụng';
+            let employerId = application.employerId ||
+                application.recruiterId ||
+                application.employer_id ||
+                application.recruiter_id ||
+                application.job?.employerId ||
+                application.employer?.id ||
+                application.company?.employerId;
 
-            // If no employerId in application, try to get from job detail
-            if (!employerId && application.jobPostId) {
-                console.log('No employerId in application, fetching job detail...');
-
-                try {
-                    const { getJobById } = await import('../services');
-                    const jobResponse = await getJobById(application.jobPostId);
-
-                    console.log('Job detail response:', jobResponse);
-
-                    if (jobResponse && jobResponse.data) {
-                        employerId = jobResponse.data.employerId;
-                        companyName = jobResponse.data.companyName || companyName;
-
-                        console.log('Got employerId from job:', employerId);
-                    }
-                } catch (jobError) {
-                    console.error('Error fetching job detail:', jobError);
-                }
-            }
+            let companyName = application.employerName ||
+                application.employer_name ||
+                application.companyName ||
+                application.company_name ||
+                application.job?.employerName ||
+                application.job?.companyName ||
+                application.employer?.fullName ||
+                'Nhà tuyển dụng';
 
             // Check if we have employerId now
             if (!employerId) {
+                console.log('Debugging missing employerId. Application structure:', JSON.stringify(application, null, 2));
                 Alert.alert(
                     'Không thể chat',
-                    `Không tìm thấy thông tin nhà tuyển dụng.\n\n` +
-                    `Application ID: ${application.id}\n` +
-                    `Job ID: ${application.jobPostId}\n` +
-                    `Job: ${application.jobTitle}\n\n` +
-                    `Vui lòng thử lại sau hoặc liên hệ hỗ trợ.`,
-                    [{ text: 'OK' }]
+                    `Thông tin nhà tuyển dụng đang được cập nhật. Vui lòng quay lại sau ít phút.\n(Job ID: ${application.jobPostId || 'N/A'})`
                 );
                 return;
             }
@@ -167,26 +148,31 @@ const MyApplicationsScreen = () => {
             console.log('Creating conversation with employer:', employerId);
 
             // Create or get conversation with employer
-            const response = await chatAPI.createConversation(
-                employerId,
-                `Xin chào, tôi đã ứng tuyển vào vị trí ${application.jobTitle}`
-            );
+            // Note: API requires int for IDs
+            const recipientId = parseInt(employerId, 10);
+            const jobPostId = application.jobPostId ? parseInt(application.jobPostId, 10) : null;
+
+            const response = await chatAPI.createConversation(recipientId, jobPostId);
 
             console.log('Chat API response:', response);
 
-            if (response && response.conversation) {
+            if (response && (response.id || response.conversationId || response.conversation)) {
                 console.log('Navigating to ChatRoom...');
+                const conversationId = response.id || response.conversationId || response.conversation?.id;
 
                 // Navigate to ChatRoom
                 navigation.navigate('Chat', {
                     screen: 'ChatRoom',
                     params: {
-                        conversationId: response.conversation.id,
+                        conversationId: conversationId,
                         participantName: companyName,
                         participantAvatar: null,
+                        jobPostId: application.jobPostId,
+                        jobTitle: application.jobTitle,
                     }
                 });
             } else {
+                console.error('Invalid response format:', response);
                 Alert.alert('Lỗi', 'Không thể tạo cuộc trò chuyện');
             }
         } catch (error) {
@@ -224,8 +210,26 @@ const MyApplicationsScreen = () => {
     };
 
     const renderApplicationCard = ({ item }) => {
-        const isWithdrawn = item.statusName === 'Withdrawn' || item.statusName === 'Đã rút';
-        const isPending = item.statusName === 'Pending' || item.statusName === 'Đang chờ';
+        // Use statusId for logic if available
+        const statusId = item.statusId;
+
+        let isWithdrawn, isPending;
+
+        if (statusId) {
+            // 8 = Withdrawn
+            isWithdrawn = statusId === 8;
+            // 1 = Pending, 2 = Reviewing
+            isPending = statusId === 1 || statusId === 2;
+        } else {
+            // Fallback to name-based logic (Legacy/Safety)
+            isWithdrawn = item.statusName === 'Withdrawn' || item.statusName === 'Đã rút';
+            isPending = item.statusName === 'Pending' ||
+                item.statusName === 'Reviewing' ||
+                item.statusName === 'Đang chờ' ||
+                item.statusName === 'Đang xem xét' ||
+                item.statusName === 'Processing' ||
+                item.statusName === 'Đang xử lý';
+        }
 
         // Feature flags - enable when backend ready
         const DELETE_ENABLED = false; // TODO: Set true khi backend có DELETE endpoint

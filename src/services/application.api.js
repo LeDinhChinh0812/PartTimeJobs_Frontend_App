@@ -6,14 +6,29 @@
 import { apiClient } from './api.service';
 
 /**
- * Get my applications (for logged-in student)
- * @param {number} pageNumber - Page number (default: 1)
- * @param {number} pageSize - Items per page (default: 10)
- * @returns {Promise<object>} User's applications with pagination
+ * 3.1 Get application details
+ * @param {number} id - Application ID
+ * @returns {Promise<object>} Application details
  */
-export const getMyApplications = async (pageNumber = 1, pageSize = 10) => {
+export const getApplicationById = async (id) => {
     try {
-        const response = await apiClient.get('/api/Applications/me', {
+        const response = await apiClient.get(`/api/applications/${id}`);
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+/**
+ * 3.2 Get applications by Job Post (Employer)
+ * @param {number} jobPostId
+ * @param {number} pageNumber
+ * @param {number} pageSize
+ * @returns {Promise<object>} List of applications for the job
+ */
+export const getApplicationsByJobPost = async (jobPostId, pageNumber = 1, pageSize = 10) => {
+    try {
+        const response = await apiClient.get(`/api/applications/job/${jobPostId}`, {
             params: { pageNumber, pageSize }
         });
         return response;
@@ -23,7 +38,24 @@ export const getMyApplications = async (pageNumber = 1, pageSize = 10) => {
 };
 
 /**
- * Create a new job application
+ * 3.3 Get my applications (Student)
+ * @param {number} pageNumber - Page number (default: 1)
+ * @param {number} pageSize - Items per page (default: 10)
+ * @returns {Promise<object>} User's applications with pagination
+ */
+export const getMyApplications = async (pageNumber = 1, pageSize = 10) => {
+    try {
+        const response = await apiClient.get('/api/applications/me', {
+            params: { pageNumber, pageSize }
+        });
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+/**
+ * 3.4 Submit application (Student)
  * @param {number} jobPostId - Job post ID to apply for
  * @param {string} coverLetter - Cover letter text
  * @param {string} resumeUrl - Resume URL (optional)
@@ -40,7 +72,7 @@ export const createApplication = async (jobPostId, coverLetter, resumeUrl = null
             requestBody.resumeUrl = resumeUrl;
         }
 
-        const response = await apiClient.post('/api/Applications', requestBody);
+        const response = await apiClient.post('/api/applications', requestBody);
         return response;
     } catch (error) {
         throw error;
@@ -48,54 +80,62 @@ export const createApplication = async (jobPostId, coverLetter, resumeUrl = null
 };
 
 /**
- * Withdraw an application
+ * 3.5 Update application status (Employer)
  * @param {number} id - Application ID
- * @returns {Promise<object>} Withdrawal response
+ * @param {number} statusId - 1=Pending, 2=Approved, 3=Rejected
+ * @param {string} notes - Notes
+ * @returns {Promise<object>} Updated application
+ */
+export const updateApplicationStatus = async (id, statusId, notes = '') => {
+    try {
+        const response = await apiClient.patch(`/api/applications/${id}/status`, {
+            statusId,
+            notes
+        });
+        return response;
+    } catch (error) {
+        throw error;
+    }
+};
+
+/**
+ * 3.6 Withdraw application (Student)
+ * @param {number} id - Application ID
+ * @returns {Promise<object>} Withdraw response
  */
 export const withdrawApplication = async (id) => {
     try {
-        const response = await apiClient.post(`/api/Applications/${id}/withdraw`);
+        console.log('=== WITHDRAW APPLICATION ===');
+        console.log('Application ID:', id);
+        const response = await apiClient.post(`/api/applications/${id}/withdraw`);
+        console.log('Withdraw Response:', response);
         return response;
     } catch (error) {
+        console.error('Withdraw application error:', {
+            message: error.message,
+            status: error.response?.status,
+            data: error.response?.data
+        });
         throw error;
     }
 };
 
 /**
- * Get application by ID
- * @param {number} id - Application ID
- * @returns {Promise<object>} Application details
- */
-export const getApplicationById = async (id) => {
-    try {
-        const response = await apiClient.get(`/api/Applications/${id}`);
-        return response;
-    } catch (error) {
-        throw error;
-    }
-};
-
-/**
- * Delete an application
+ * Delete an application (Legacy/Admin)
  * @param {number} id - Application ID
  * @returns {Promise<object>} Deletion response
  */
 export const deleteApplication = async (id) => {
     try {
         console.log('=== DELETE APPLICATION ===');
-        console.log('Application ID:', id);
-        console.log('URL:', `/api/Applications/${id}`);
-
-        const response = await apiClient.delete(`/api/Applications/${id}`);
-
-        console.log('Delete response:', response);
+        const response = await apiClient.delete(`/api/applications/${id}`);
         return response;
     } catch (error) {
         console.error('Delete application error:', {
             message: error.message,
             response: error.response?.data,
             status: error.response?.status,
-            url: `/api/Applications/${id}`
+            url: `/api/applications/${id}`
         });
         throw error;
     }

@@ -33,6 +33,7 @@ import {
     MyCVScreen,
     CVTemplatesScreen,
     UploadCVScreen,
+    PDFViewerScreen,
 } from '../screens';
 
 const Stack = createNativeStackNavigator();
@@ -46,6 +47,8 @@ const HomeStack = () => {
             <Stack.Screen name="JobDetail" component={JobDetailScreen} />
             <Stack.Screen name="Jobs" component={JobsListScreen} />
             <Stack.Screen name="MyCV" component={MyCVScreen} />
+            <Stack.Screen name="ApplyJob" component={ApplyJobScreen} />
+            <Stack.Screen name="CVPreview" component={CVPreviewScreen} />
         </Stack.Navigator>
     );
 };
@@ -58,6 +61,7 @@ const JobsStack = () => {
             <Stack.Screen name="JobDetail" component={JobDetailScreen} />
             <Stack.Screen name="ApplyJob" component={ApplyJobScreen} />
             <Stack.Screen name="CreateCV" component={CreateCVScreen} />
+            <Stack.Screen name="PDFViewer" component={PDFViewerScreen} />
         </Stack.Navigator>
     );
 };
@@ -67,6 +71,7 @@ const ApplicationsStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="ApplicationsList" component={MyApplicationsScreen} />
         <Stack.Screen name="JobDetail" component={JobDetailScreen} />
+        <Stack.Screen name="ApplyJob" component={ApplyJobScreen} />
     </Stack.Navigator>
 );
 
@@ -76,6 +81,7 @@ const SaveJobsStack = () => (
         {/* Placeholder for SavedJobs - reusing JobsListScreen for now to prevent crash */}
         <Stack.Screen name="SavedJobsList" component={JobsListScreen} />
         <Stack.Screen name="JobDetail" component={JobDetailScreen} />
+        <Stack.Screen name="ApplyJob" component={ApplyJobScreen} />
     </Stack.Navigator>
 );
 
@@ -95,13 +101,17 @@ const ProfileStack = () => {
             <Stack.Screen name="ProfileMain" component={ProfileScreen} />
             <Stack.Screen name="EditProfile" component={EditProfileScreen} />
             <Stack.Screen name="Applications" component={MyApplicationsScreen} />
+            <Stack.Screen name="JobDetail" component={JobDetailScreen} />
+            <Stack.Screen name="ApplyJob" component={ApplyJobScreen} />
             {/* Placeholder for SavedJobs - reusing JobsListScreen for now to prevent crash */}
             <Stack.Screen name="SavedJobs" component={JobsListScreen} />
+            <Stack.Screen name="Jobs" component={JobsListScreen} />
             <Stack.Screen name="CVPreview" component={CVPreviewScreen} />
             <Stack.Screen name="CreateCV" component={CreateCVScreen} />
             <Stack.Screen name="UploadCV" component={UploadCVScreen} />
             <Stack.Screen name="MyCV" component={MyCVScreen} />
             <Stack.Screen name="CVTemplates" component={CVTemplatesScreen} />
+            <Stack.Screen name="PDFViewer" component={PDFViewerScreen} />
         </Stack.Navigator>
     );
 };

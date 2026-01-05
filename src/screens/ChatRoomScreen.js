@@ -15,30 +15,152 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 import { chatAPI, signalRService } from '../services';
 import { COLORS, FONT_SIZES, SPACING } from '../constants';
+import { useAuth } from '../context';
+
+/**
+ * Normalizes message object to handle inconsistent API/SignalR keys
+ */
+const normalizeMessage = (msg) => {
+    if (!msg) return null;
+    const normalized = {
+        ...msg,
+        id: msg.id || msg.Id,
+        message: msg.message || msg.content || msg.Content || '',
+        content: msg.content || msg.message || msg.Content || '',
+        sender_id: msg.sender_id || msg.senderId || msg.SenderId,
+        senderId: msg.senderId || msg.sender_id || msg.SenderId,
+        created_at: (msg.created_at || msg.createdAt || msg.CreatedAt) ?
+            ((msg.created_at || msg.createdAt || msg.CreatedAt).endsWith('Z') ?
+                (msg.created_at || msg.createdAt || msg.CreatedAt) :
+                (msg.created_at || msg.createdAt || msg.CreatedAt) + 'Z') : new Date().toISOString(),
+        createdAt: (msg.createdAt || msg.created_at || msg.CreatedAt) ?
+            ((msg.createdAt || msg.created_at || msg.CreatedAt).endsWith('Z') ?
+                (msg.createdAt || msg.created_at || msg.CreatedAt) :
+                (msg.createdAt || msg.created_at || msg.CreatedAt) + 'Z') : new Date().toISOString(),
+        is_read: msg.is_read || msg.isRead || msg.IsRead || false,
+        conversationId: msg.conversationId || msg.conversation_id || msg.ConversationId
+    };
+
+    return normalized;
+};
+
 
 /**
  * Chat Room Screen
  * Individual chat conversation interface
  */
 const ChatRoomScreen = ({ route, navigation }) => {
-    const { conversationId, participantName, participantAvatar } = route.params;
+    const { user } = useAuth();
+    const currentUserId = user?.userId;
+    const { conversationId, participantName, participantAvatar, jobPostId: initialJobPostId, jobTitle: initialJobTitle } = route.params;
+
+    // Use jobPostId from params if available
+    const [jobId, setJobId] = useState(initialJobPostId);
+    const [jobTitle, setJobTitle] = useState(initialJobTitle);
+    const [application, setApplication] = useState(null);
+    const [withdrawing, setWithdrawing] = useState(false);
 
     const [messages, setMessages] = useState([]);
+    const [typingText, setTypingText] = useState('');
     const [inputText, setInputText] = useState('');
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
     const [page, setPage] = useState(1);
     const [hasMore, setHasMore] = useState(true);
     const [isConnected, setIsConnected] = useState(false);
+    const [loadingJobDetail, setLoadingJobDetail] = useState(false);
 
     const flatListRef = useRef(null);
     const typingTimeoutRef = useRef(null);
+
+    // Fetch Job and Application details if jobId exists
+    useEffect(() => {
+        const fetchJobAndApp = async () => {
+            if (!jobId) return;
+
+            try {
+                setLoadingJobDetail(true);
+                const { getJobById, getMyApplications } = await import('../services');
+
+                // Fetch job to get title if not provided
+                if (!jobTitle && jobId) {
+                    try {
+                        const jobRes = await getJobById(jobId);
+                        if (jobRes && jobRes.success) {
+                            setJobTitle(jobRes.data.title);
+                        }
+                    } catch (jobErr) {
+                        console.log('ChatRoom: Could not fetch job title, using route param if available');
+                    }
+                }
+
+                // Fetch application status
+                if (jobId) {
+                    try {
+                        const appRes = await getMyApplications(1, 100);
+                        if (appRes && appRes.success) {
+                            const foundApp = appRes.data.items?.find(app => (app.jobPostId || app.jobId) === parseInt(jobId, 10));
+                            if (foundApp) {
+                                setApplication(foundApp);
+                            }
+                        }
+                    } catch (appErr) {
+                        console.log('ChatRoom: Could not fetch application status');
+                    }
+                }
+            } catch (err) {
+                // Silently log major errors to avoid breaking the chat
+                console.log('Silent: Error in fetchJobAndApp sequence');
+            } finally {
+                setLoadingJobDetail(false);
+            }
+        };
+
+        fetchJobAndApp();
+    }, [jobId, jobTitle]);
+
+    const handleWithdraw = async () => {
+        if (!application) return;
+
+        Alert.alert(
+            'Rút đơn ứng tuyển',
+            `Bạn có chắc chắn muốn rút đơn ứng tuyển cho vị trí "${jobTitle}"?`,
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Rút đơn',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setWithdrawing(true);
+                            const { withdrawApplication } = await import('../services');
+                            const response = await withdrawApplication(application.id);
+
+                            if (response.success) {
+                                Alert.alert('Thành công', 'Đã rút đơn ứng tuyển');
+                                // Update local application status
+                                setApplication(prev => ({ ...prev, statusName: 'Withdrawn' }));
+                            } else {
+                                Alert.alert('Lỗi', response.message || 'Không thể rút đơn');
+                            }
+                        } catch (err) {
+                            console.error('Error in handleWithdraw:', err);
+                            Alert.alert('Lỗi', 'Có lỗi xảy ra khi rút đơn');
+                        } finally {
+                            setWithdrawing(false);
+                        }
+                    }
+                }
+            ]
+        );
+    };
 
     // Load messages
     const loadMessages = useCallback(async (pageNum = 1, append = false) => {
         try {
             const data = await chatAPI.getMessages(conversationId, pageNum, 50);
-            const newMessages = data.messages || [];
+            const rawMessages = Array.isArray(data) ? data : (data.messages || data.items || []);
+            const newMessages = rawMessages.map(normalizeMessage);
 
             if (append) {
                 setMessages((prev) => [...newMessages, ...prev]);
@@ -66,8 +188,71 @@ const ChatRoomScreen = ({ route, navigation }) => {
     useEffect(() => {
         let unsubscribeMessage;
         let unsubscribeConnectionState;
+        let unsubscribeTyping;
 
         const setupSignalR = async () => {
+            // Subscribe to new messages first to avoid race conditions
+            unsubscribeMessage = signalRService.onMessage((rawMessage) => {
+                console.log('ChatRoom: Raw SignalR message:', rawMessage);
+                const message = normalizeMessage(rawMessage);
+
+                // Debug logging
+                console.log('ChatRoom: Comparing Conversation IDs:', {
+                    screen_conversationId: conversationId,
+                    msg_conversationId: message.conversationId,
+                    match_loose: message.conversationId == conversationId,
+                    match_strict: message.conversationId === conversationId,
+                    match_int: message.conversationId === parseInt(conversationId)
+                });
+
+                // Add message if it's for this conversation
+                // compare loosely to handle string/number differences
+                if (message.conversationId == conversationId) {
+                    setMessages((prev) => {
+                        // Check if message already exists
+                        const exists = prev.some(m => m.id && message.id && m.id === message.id);
+                        if (exists) {
+                            console.log('ChatRoom: Message already exists, skipping:', message.id);
+                            return prev;
+                        }
+
+                        console.log('ChatRoom: Adding new message to list:', message);
+
+                        // Ensure message has an ID to prevent key errors
+                        if (!message.id) {
+                            message.id = `signalr-${Date.now()}-${Math.random()}`;
+                        }
+
+                        return [...prev, message];
+                    });
+
+                    // Scroll to bottom
+                    setTimeout(() => {
+                        flatListRef.current?.scrollToEnd({ animated: true });
+                    }, 100);
+                } else {
+                    console.log('ChatRoom: Message discarded (wrong conversation)');
+                }
+            });
+
+            // Subscribe to typing events
+            unsubscribeTyping = signalRService.onTyping(({ userId, isTyping }) => {
+                // Check if it's the other person typing (not us)
+                if (parseInt(userId) !== parseInt(currentUserId)) {
+                    if (isTyping) {
+                        setTypingText(`${participantName || 'Người khác'} đang nhập...`);
+                    } else {
+                        setTypingText('');
+                    }
+                }
+            });
+
+            // Subscribe to connection state changes
+            unsubscribeConnectionState = signalRService.onConnectionStateChange((state) => {
+                console.log('SignalR connection state:', state);
+                setIsConnected(state === 'connected');
+            });
+
             try {
                 // Connect to SignalR
                 await signalRService.connect();
@@ -75,33 +260,6 @@ const ChatRoomScreen = ({ route, navigation }) => {
 
                 // Join conversation room
                 await signalRService.joinConversation(conversationId);
-
-                // Subscribe to new messages
-                unsubscribeMessage = signalRService.onMessage((message) => {
-                    console.log('New message received via SignalR:', message);
-
-                    // Add message if it's for this conversation
-                    if (message.conversationId === conversationId) {
-                        setMessages((prev) => {
-                            // Check if message already exists
-                            const exists = prev.some(m => m.id === message.id);
-                            if (exists) return prev;
-
-                            return [...prev, message];
-                        });
-
-                        // Scroll to bottom
-                        setTimeout(() => {
-                            flatListRef.current?.scrollToEnd({ animated: true });
-                        }, 100);
-                    }
-                });
-
-                // Subscribe to connection state changes
-                unsubscribeConnectionState = signalRService.onConnectionStateChange((state) => {
-                    console.log('SignalR connection state:', state);
-                    setIsConnected(state === 'connected');
-                });
 
             } catch (error) {
                 console.error('Error setting up SignalR:', error);
@@ -114,6 +272,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
         // Cleanup on unmount
         return () => {
             if (unsubscribeMessage) unsubscribeMessage();
+            if (unsubscribeTyping) unsubscribeTyping();
             if (unsubscribeConnectionState) unsubscribeConnectionState();
 
             // Leave conversation
@@ -149,11 +308,20 @@ const ChatRoomScreen = ({ route, navigation }) => {
         const trimmedText = inputText.trim();
         if (!trimmedText || sending) return;
 
+        // Ensure we have a valid conversationId
+        if (!conversationId) {
+            Alert.alert('Lỗi', 'Không tìm thấy cuộc trò chuyện');
+            return;
+        }
+
         setSending(true);
+        const tempId = `temp-${Date.now()}`;
         const tempMessage = {
-            id: `temp-${Date.now()}`,
+            id: tempId,
+            content: trimmedText,
             message: trimmedText,
-            sender_id: 'current_user',
+            senderId: currentUserId || 'current_user',
+            sender_id: currentUserId || 'current_user',
             created_at: new Date().toISOString(),
             is_sending: true,
         };
@@ -163,39 +331,33 @@ const ChatRoomScreen = ({ route, navigation }) => {
         setInputText('');
 
         try {
-            // Try to send via SignalR if connected
-            if (isConnected) {
-                await signalRService.sendMessage(conversationId, trimmedText);
+            // Always use REST API for sending to avoid SignalR invocation issues
+            const response = await chatAPI.sendMessage(conversationId, trimmedText);
+            console.log('Message sent via REST API:', response);
+            const normalizedRes = normalizeMessage(response);
 
-                // Remove temp message (will be replaced by SignalR event)
-                setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
-            } else {
-                // Fallback to HTTP API
-                const response = await chatAPI.sendMessage(conversationId, trimmedText);
-
-                // Replace temp message with real message
-                setMessages((prev) =>
-                    prev.map((msg) =>
-                        msg.id === tempMessage.id ? { ...response.message, is_sending: false } : msg
-                    )
-                );
-            }
+            // Replace temp message with real message
+            setMessages((prev) =>
+                prev.map((msg) =>
+                    msg.id === tempId ? { ...normalizedRes, is_sending: false } : msg
+                )
+            );
 
             // Scroll to bottom
             setTimeout(() => {
                 flatListRef.current?.scrollToEnd({ animated: true });
             }, 100);
         } catch (error) {
-            console.error('Error sending message:', error);
+            console.error('Error sending message via REST:', error);
 
             // Remove temp message and show error
-            setMessages((prev) => prev.filter((msg) => msg.id !== tempMessage.id));
+            setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
             Alert.alert('Lỗi', 'Không thể gửi tin nhắn. Vui lòng thử lại.');
             setInputText(trimmedText);
         } finally {
             setSending(false);
         }
-    }, [inputText, conversationId, sending, isConnected]);
+    }, [inputText, conversationId, sending]);
 
     // Handle typing indicator
     const handleTextChange = useCallback((text) => {
@@ -227,7 +389,10 @@ const ChatRoomScreen = ({ route, navigation }) => {
 
     // Format message timestamp
     const formatMessageTime = (timestamp) => {
+        if (!timestamp) return '';
         const date = new Date(timestamp);
+        if (isNaN(date.getTime())) return ''; // Return empty if invalid date
+
         return date.toLocaleTimeString('vi-VN', {
             hour: '2-digit',
             minute: '2-digit',
@@ -236,11 +401,19 @@ const ChatRoomScreen = ({ route, navigation }) => {
 
     // Render message item
     const renderMessageItem = ({ item, index }) => {
-        const isCurrentUser = item.sender_id === 'current_user'; // Replace with actual user ID
-        const showDate =
+        // Compare with current user ID from auth context
+        const isCurrentUser = item.senderId === currentUserId || item.sender_id === currentUserId || item.sender_id === 'current_user';
+
+        const itemDate = new Date(item.created_at);
+        const isValidDate = !isNaN(itemDate.getTime());
+
+        const prevItem = index > 0 ? messages[index - 1] : null;
+        const prevDate = prevItem ? new Date(prevItem.created_at) : null;
+
+        const showDate = isValidDate && (
             index === 0 ||
-            new Date(messages[index - 1].created_at).toDateString() !==
-            new Date(item.created_at).toDateString();
+            (prevDate && !isNaN(prevDate.getTime()) && prevDate.toDateString() !== itemDate.toDateString())
+        );
 
         return (
             <>
@@ -315,12 +488,40 @@ const ChatRoomScreen = ({ route, navigation }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
+            {/* Job Info Bar */}
+            {jobId && jobTitle && (
+                <View style={styles.jobInfoBar}>
+                    <View style={styles.jobInfoMain}>
+                        <Ionicons name="briefcase-outline" size={16} color={COLORS.primary} />
+                        <Text style={styles.jobInfoTitle} numberOfLines={1}>
+                            {jobTitle}
+                        </Text>
+                    </View>
+
+                    {application && (application.statusName === 'Pending' || application.statusName === 'Đang chờ') ? (
+                        <TouchableOpacity
+                            style={styles.withdrawSmallButton}
+                            onPress={handleWithdraw}
+                            disabled={withdrawing}
+                        >
+                            {withdrawing ? (
+                                <ActivityIndicator size="small" color={COLORS.error} />
+                            ) : (
+                                <Text style={styles.withdrawSmallText}>Hủy CV</Text>
+                            )}
+                        </TouchableOpacity>
+                    ) : application && (application.statusName === 'Withdrawn' || application.statusName === 'Đã rút') ? (
+                        <Text style={styles.statusSmallText}>Đã rút đơn</Text>
+                    ) : null}
+                </View>
+            )}
+
             {/* Messages List */}
             <FlatList
                 ref={flatListRef}
                 data={messages}
                 renderItem={renderMessageItem}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item, index) => item.id ? `${item.id}-${index}` : index.toString()}
                 contentContainerStyle={styles.messagesList}
                 onEndReached={loadMoreMessages}
                 onEndReachedThreshold={0.1}
@@ -338,6 +539,13 @@ const ChatRoomScreen = ({ route, navigation }) => {
                     ) : null
                 }
             />
+
+            {/* Typing Indicator */}
+            {typingText ? (
+                <View style={styles.typingContainer}>
+                    <Text style={styles.typingText}>{typingText}</Text>
+                </View>
+            ) : null}
 
             {/* Input Area */}
             <View style={styles.inputContainer}>
@@ -527,6 +735,56 @@ const styles = StyleSheet.create({
     },
     sendButtonDisabled: {
         opacity: 0.5,
+    },
+    jobInfoBar: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        backgroundColor: '#E3F2FD',
+        paddingHorizontal: SPACING.md,
+        paddingVertical: SPACING.sm,
+        borderBottomWidth: 1,
+        borderBottomColor: '#BBDEFB',
+    },
+    jobInfoMain: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        flex: 1,
+        marginRight: SPACING.sm,
+    },
+    jobInfoTitle: {
+        fontSize: FONT_SIZES.sm,
+        color: COLORS.primary,
+        fontWeight: '600',
+        marginLeft: 6,
+    },
+    withdrawSmallButton: {
+        backgroundColor: COLORS.white,
+        paddingHorizontal: 10,
+        paddingVertical: 4,
+        borderRadius: 12,
+        borderWidth: 1,
+        borderColor: COLORS.error,
+    },
+    withdrawSmallText: {
+        fontSize: 12,
+        color: COLORS.error,
+        fontWeight: 'bold',
+    },
+    statusSmallText: {
+        fontSize: 12,
+        color: COLORS.gray,
+        fontStyle: 'italic',
+    },
+    typingContainer: {
+        paddingHorizontal: SPACING.md,
+        paddingVertical: 5,
+        backgroundColor: COLORS.background,
+    },
+    typingText: {
+        fontSize: FONT_SIZES.xs,
+        color: COLORS.gray,
+        fontStyle: 'italic',
     },
 });
 

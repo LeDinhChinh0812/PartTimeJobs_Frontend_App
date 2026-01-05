@@ -7,10 +7,14 @@ import { apiClient } from './api.service';
 const chatAPI = {
     /**
      * Get all conversations for the current user
+     * @param {number} pageNumber - Page number
+     * @param {number} pageSize - Page size
      */
-    getConversations: async () => {
+    getConversations: async (pageNumber = 1, pageSize = 20) => {
         try {
-            const response = await apiClient.get('/api/chat/conversations');
+            const response = await apiClient.get('/api/chat/conversations', {
+                params: { pageNumber, pageSize },
+            });
             return response.data;
         } catch (error) {
             console.error('Error fetching conversations:', error);
@@ -21,14 +25,14 @@ const chatAPI = {
     /**
      * Get messages for a specific conversation
      * @param {string} conversationId - ID of the conversation
-     * @param {number} page - Page number for pagination
-     * @param {number} limit - Number of messages per page
+     * @param {number} pageNumber - Page number
+     * @param {number} pageSize - Page size
      */
-    getMessages: async (conversationId, page = 1, limit = 50) => {
+    getMessages: async (conversationId, pageNumber = 1, pageSize = 50) => {
         try {
             const response = await apiClient.get(
                 `/api/chat/conversations/${conversationId}/messages`,
-                { params: { page, limit } }
+                { params: { pageNumber, pageSize } }
             );
             return response.data;
         } catch (error) {
@@ -38,31 +42,23 @@ const chatAPI = {
     },
 
     /**
-     * Send a message in a conversation
+     * Send a message
      * @param {string} conversationId - ID of the conversation
-     * @param {string} message - Message content
-     * @param {Array} attachments - Optional file attachments
+     * @param {string} content - Message content
+     * @param {string} recipientId - Optional recipient ID
+     * @param {string} jobPostId - Optional job post ID
      */
-    sendMessage: async (conversationId, message, attachments = []) => {
+    sendMessage: async (conversationId, content, recipientId = null, jobPostId = null) => {
         try {
-            const formData = new FormData();
-            formData.append('message', message);
+            const payload = {
+                conversationId,
+                content,
+            };
 
-            if (attachments.length > 0) {
-                attachments.forEach((file, index) => {
-                    formData.append(`attachment_${index}`, file);
-                });
-            }
+            if (recipientId) payload.recipientId = recipientId;
+            if (jobPostId) payload.jobPostId = jobPostId;
 
-            const response = await apiClient.post(
-                `/api/chat/conversations/${conversationId}/messages`,
-                formData,
-                {
-                    headers: {
-                        'Content-Type': 'multipart/form-data',
-                    },
-                }
-            );
+            const response = await apiClient.post('/api/chat/messages', payload);
             return response.data;
         } catch (error) {
             console.error('Error sending message:', error);
@@ -72,34 +68,23 @@ const chatAPI = {
 
     /**
      * Create a new conversation
-     * @param {string} recipientId - ID of the recipient user
-     * @param {string} initialMessage - Optional initial message
+     * @param {number} recipientId - ID of the recipient user
+     * @param {number} jobPostId - Optional Job Post ID
      */
-    createConversation: async (recipientId, initialMessage = '') => {
+    createConversation: async (recipientId, jobPostId = null) => {
         try {
-            console.log('=== CREATE CONVERSATION ===');
-            console.log('RecipientId (employerId):', recipientId);
-            console.log('RecipientId type:', typeof recipientId);
-            console.log('Initial message:', initialMessage);
-
             const payload = {
-                recipient_id: recipientId,
-                initial_message: initialMessage,
+                recipientId: recipientId,
             };
 
-            console.log('Payload:', JSON.stringify(payload, null, 2));
-            console.log('Request URL:', '/api/chat/conversations');
+            if (jobPostId) {
+                payload.jobPostId = jobPostId;
+            }
 
             const response = await apiClient.post('/api/chat/conversations', payload);
-
-            console.log('Create conversation response:', response);
             return response.data;
         } catch (error) {
-            console.error('=== CREATE CONVERSATION ERROR ===');
-            console.error('Error message:', error.message);
-            console.error('Error response:', error.response?.data);
-            console.error('Status code:', error.response?.status);
-            console.error('RecipientId was:', recipientId);
+            console.error('Error creating conversation:', error);
             throw error;
         }
     },
@@ -110,7 +95,7 @@ const chatAPI = {
      */
     markAsRead: async (conversationId) => {
         try {
-            const response = await apiClient.put(
+            const response = await apiClient.post(
                 `/api/chat/conversations/${conversationId}/read`
             );
             return response.data;
@@ -121,33 +106,14 @@ const chatAPI = {
     },
 
     /**
-     * Delete a conversation
-     * @param {string} conversationId - ID of the conversation
+     * Get unread messages count
      */
-    deleteConversation: async (conversationId) => {
+    getUnreadCount: async () => {
         try {
-            const response = await apiClient.delete(
-                `/api/chat/conversations/${conversationId}`
-            );
+            const response = await apiClient.get('/api/chat/unread-count');
             return response.data;
         } catch (error) {
-            console.error('Error deleting conversation:', error);
-            throw error;
-        }
-    },
-
-    /**
-     * Search messages
-     * @param {string} query - Search query
-     */
-    searchMessages: async (query) => {
-        try {
-            const response = await apiClient.get('/api/chat/search', {
-                params: { q: query },
-            });
-            return response.data;
-        } catch (error) {
-            console.error('Error searching messages:', error);
+            console.error('Error fetching unread count:', error);
             throw error;
         }
     },

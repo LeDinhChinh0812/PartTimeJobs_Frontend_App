@@ -18,6 +18,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../constants';
 import { useAuth } from '../context';
 import { getMyProfile, createOrUpdateProfile, deleteProfile } from '../services';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const MyCVScreen = () => {
     const navigation = useNavigation();
@@ -25,9 +26,10 @@ const MyCVScreen = () => {
     const [profile, setProfile] = useState(null);
     const [loading, setLoading] = useState(true);
     const [modalVisible, setModalVisible] = useState(false);
-    const [selectedCVType, setSelectedCVType] = useState(null); // 'created' or 'uploaded'
+    const [selectedCVType, setSelectedCVType] = useState(null); // 'created' hoặc 'uploaded'
+    const [localCVUri, setLocalCVUri] = useState(null);
 
-    // Use App Theme Color (Orange)
+    // Sử dụng màu chủ đạo của ứng dụng (Cam)
     const PRIMARY_COLOR = COLORS.accentOrange || '#FF5722';
 
     const fetchProfile = async () => {
@@ -47,6 +49,10 @@ const MyCVScreen = () => {
     useFocusEffect(
         useCallback(() => {
             fetchProfile();
+            // Lấy đường dẫn CV cục bộ
+            AsyncStorage.getItem('LOCAL_CV_URI').then(uri => {
+                if (uri) setLocalCVUri(uri);
+            });
         }, [])
     );
 
@@ -67,15 +73,29 @@ const MyCVScreen = () => {
                             // If 'created' -> clear profile fields.
                             // If 'uploaded' -> clear resumeUrl.
 
-                            const updatePayload = {};
+                            // Xây dựng payload để update, giữ nguyên các dữ liệu khác
+                            const p = profile;
+                            const updatePayload = {
+                                fullName: p.fullName,
+                                email: p.email,
+                                phoneNumber: p.phoneNumber,
+                                address: p.address,
+                                bio: p.bio,
+                                dateOfBirth: p.dateOfBirth,
+                                university: p.university,
+                                major: p.major,
+                                gpa: p.gpa,
+                                skills: p.skills,
+                                resumeUrl: p.resumeUrl
+                            };
 
                             if (selectedCVType === 'created') {
-                                // Clear Visual CV fields
+                                // Xóa các trường của CV Hệ thống
                                 updatePayload.major = '';
                                 updatePayload.university = '';
-                                updatePayload.skills = []; // empty array? or ''? API usually takes list.
+                                updatePayload.skills = [];
                                 updatePayload.bio = '';
-                                // We keep personal info (name, email)
+                                // Lưu ý: Giữ lại thông tin cá nhân (tên, email)
                             } else if (selectedCVType === 'uploaded') {
                                 updatePayload.resumeUrl = '';
                             }
@@ -102,6 +122,33 @@ const MyCVScreen = () => {
     const handleMenuPress = (type) => {
         setSelectedCVType(type);
         setModalVisible(true);
+    };
+
+    const handleViewCV = (url) => {
+        if (!url) return;
+
+        // Xử lý File URI cục bộ - Mở trình xem trong App
+        if (url.startsWith('file://') || url.startsWith('/')) {
+            navigation.navigate('PDFViewer', {
+                uri: url,
+                title: url.split('/').pop()
+            });
+            return;
+        }
+
+        // Nếu là Mock URL, thử mở file cục bộ đã lưu
+        if (url.includes('jobfinder.com') || url.includes('mock') || url.includes('example')) {
+            if (localCVUri) {
+                navigation.navigate('PDFViewer', {
+                    uri: localCVUri,
+                    title: 'CV_Upload.pdf'
+                });
+                return;
+            }
+            Alert.alert('Chưa có file', 'Vui lòng tải lên CV để xem.');
+        } else {
+            Linking.openURL(url);
+        }
     };
 
     // --- Renderers ---
@@ -158,9 +205,9 @@ const MyCVScreen = () => {
         );
     }
 
-    // Logic for "Created CV": Check if major or university exists (heuristic)
+    // Logic cho "CV Đã tạo": Kiểm tra xem trường ngành học hoặc trường đại học có dữ liệu không
     const hasCreatedCV = profile && (profile.major || profile.university);
-    // Logic for "Uploaded CV": Check resumeUrl
+    // Logic cho "CV Đã tải lên": Kiểm tra resumeUrl
     const hasUploadedCV = profile && profile.resumeUrl && profile.resumeUrl.length > 5;
 
     return (
@@ -200,7 +247,7 @@ const MyCVScreen = () => {
                             'uploaded',
                             'CV_Upload.pdf', // Or parse filename from URL if possible
                             'Đã tải lên',
-                            () => Linking.openURL(profile.resumeUrl),
+                            () => handleViewCV(profile.resumeUrl),
                             null, // Edit not really applicable for upload unless re-upload
                             handleMenuPress
                         )}
@@ -209,8 +256,7 @@ const MyCVScreen = () => {
                     renderEmptySection('CV đã tải lên Job Finder', 'cloud-upload-outline', 'Chưa có CV nào được tải lên', 'Tải CV lên', () => navigation.navigate('UploadCV'))
                 )}
 
-                {/* Cover Letter - Placeholder */}
-                {renderEmptySection('Cover letter', 'document-text-outline', 'Chưa có Cover letter nào được tạo', 'Tạo Cover letter', () => { })}
+
             </ScrollView>
 
             {/* Bottom Sheet Modal */}
@@ -231,7 +277,7 @@ const MyCVScreen = () => {
                                     </TouchableOpacity>
                                 </View>
 
-                                <TouchableOpacity style={styles.modalItem} onPress={() => { setModalVisible(false); if (selectedCVType === 'created') navigation.navigate('CreateCV'); else if (selectedCVType === 'uploaded') Linking.openURL(profile.resumeUrl); }}>
+                                <TouchableOpacity style={styles.modalItem} onPress={() => { setModalVisible(false); if (selectedCVType === 'created') navigation.navigate('CreateCV'); else if (selectedCVType === 'uploaded') handleViewCV(profile.resumeUrl); }}>
                                     <Ionicons name="eye-outline" size={22} color={COLORS.textPrimary} />
                                     <Text style={styles.modalItemText}>Xem</Text>
                                 </TouchableOpacity>

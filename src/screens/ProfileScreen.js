@@ -191,19 +191,6 @@ const ProfileScreen = () => {
                             12
                         </Text>
                     </TouchableOpacity>
-
-                    <TouchableOpacity
-                        style={styles.gridItem}
-                    // No navigation for now
-                    >
-                        <View style={[styles.gridIcon, { backgroundColor: `${ICON_COLOR}15` }]}>
-                            <Ionicons name="eye" size={24} color={ICON_COLOR} />
-                        </View>
-                        <Text style={styles.gridTitle}>NTD đã xem hồ sơ</Text>
-                        <Text style={[styles.gridCount, { color: COLORS.textSecondary }]}>
-                            0
-                        </Text>
-                    </TouchableOpacity>
                 </View>
 
                 {/* Utilities / Settings */}
