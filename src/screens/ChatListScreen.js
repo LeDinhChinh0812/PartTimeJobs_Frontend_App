@@ -15,6 +15,45 @@ import { chatAPI } from '../services';
 import { COLORS, FONT_SIZES, SPACING } from '../constants';
 
 /**
+ * Normalizes conversation object to handle inconsistent API keys
+ */
+const normalizeConversation = (conv) => {
+    if (!conv) return null;
+
+    // Deep search for participant name
+    const participantName =
+        conv.employerName ||
+        conv.employer_name ||
+        conv.participant_name ||
+        conv.participantName ||
+        conv.ParticipantName ||
+        conv.participant?.fullName ||
+        conv.participant?.fullName ||
+        conv.otherUser?.fullName ||
+        conv.fullName ||
+        conv.employer?.employerName ||
+        conv.employer?.companyName ||
+        conv.employer?.fullName ||
+        (conv.job_title ? `Nhà tuyển dụng (${conv.job_title})` : 'Người dùng');
+
+    return {
+        ...conv,
+        id: conv.id || conv.Id,
+        participant_name: participantName,
+        participant_avatar: conv.participant_avatar || conv.participantAvatar || conv.ParticipantAvatar || conv.participant?.avatarUrl || null,
+        last_message: conv.last_message || conv.lastMessage || conv.LastMessage || 'Chưa có tin nhắn',
+        last_message_at: conv.last_message_at || conv.lastMessageAt || conv.LastMessageAt ?
+            (conv.last_message_at || conv.lastMessageAt || conv.LastMessageAt).endsWith('Z') ?
+                (conv.last_message_at || conv.lastMessageAt || conv.LastMessageAt) :
+                (conv.last_message_at || conv.lastMessageAt || conv.LastMessageAt) + 'Z' : null,
+        unread_count: conv.unread_count || conv.unreadCount || conv.UnreadCount || 0,
+        is_online: conv.is_online || conv.isOnline || conv.IsOnline || false,
+        job_post_id: conv.job_post_id || conv.jobPostId || conv.JobPostId,
+        job_title: conv.job_title || conv.jobTitle || conv.JobTitle,
+    };
+};
+
+/**
  * Chat List Screen
  * Displays all conversations for the current user
  */
@@ -29,8 +68,11 @@ const ChatListScreen = ({ navigation }) => {
     const loadConversations = useCallback(async () => {
         try {
             const data = await chatAPI.getConversations();
-            setConversations(data.conversations || []);
-            setFilteredConversations(data.conversations || []);
+            console.log('DEBUG: ChatList data raw:', JSON.stringify(data, null, 2));
+            const rawList = Array.isArray(data) ? data : (data.conversations || data.items || []);
+            const list = rawList.map(normalizeConversation);
+            setConversations(list);
+            setFilteredConversations(list);
         } catch (error) {
             console.error('Error loading conversations:', error);
         } finally {
@@ -68,6 +110,8 @@ const ChatListScreen = ({ navigation }) => {
             conversationId: conversation.id,
             participantName: conversation.participant_name,
             participantAvatar: conversation.participant_avatar,
+            jobPostId: conversation.job_post_id || conversation.jobPostId,
+            jobTitle: conversation.job_title || conversation.jobTitle,
         });
     }, [navigation]);
 
@@ -78,18 +122,26 @@ const ChatListScreen = ({ navigation }) => {
 
     // Format timestamp
     const formatTime = (timestamp) => {
+        if (!timestamp) return '';
         const date = new Date(timestamp);
-        const now = new Date();
-        const diffInHours = (now - date) / (1000 * 60 * 60);
+        if (isNaN(date.getTime())) return '';
 
-        if (diffInHours < 24) {
+        const now = new Date();
+        const msgDate = new Date(date);
+
+        if (msgDate.toDateString() === now.toDateString()) {
             return date.toLocaleTimeString('vi-VN', {
                 hour: '2-digit',
                 minute: '2-digit',
             });
-        } else if (diffInHours < 48) {
+        }
+
+        const yesterday = new Date();
+        yesterday.setDate(now.getDate() - 1);
+        if (msgDate.toDateString() === yesterday.toDateString()) {
             return 'Hôm qua';
-        } else {
+        }
+        else {
             return date.toLocaleDateString('vi-VN', {
                 day: '2-digit',
                 month: '2-digit',
@@ -133,11 +185,11 @@ const ChatListScreen = ({ navigation }) => {
                     <Text
                         style={[
                             styles.lastMessage,
-                            item.unread_count > 0 && styles.unreadMessage,
+                            (item.unread_count > 0 || item.unreadCount > 0) && styles.unreadMessage,
                         ]}
                         numberOfLines={1}
                     >
-                        {item.last_message || 'No messages yet'}
+                        {item.last_message || 'Chưa có tin nhắn'}
                     </Text>
                     {item.unread_count > 0 && (
                         <View style={styles.unreadBadge}>

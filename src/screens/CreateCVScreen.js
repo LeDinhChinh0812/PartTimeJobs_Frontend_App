@@ -57,7 +57,7 @@ const CreateCVScreen = () => {
         awards: [], // Giải thưởng
     };
 
-    const [cvData, setCvData] = useState(initialCVState);
+    const [cvData, setCvData] = useState({ ...initialCVState, resumeUrl: '' });
 
     useFocusEffect(
         React.useCallback(() => {
@@ -84,6 +84,7 @@ const CreateCVScreen = () => {
                     bio: p.bio || '',
                     jobTitle: p.major || '', // Use major as job title initially
                     skills: p.skills ? p.skills.map(s => s.skillName).join(', ') : '',
+                    resumeUrl: p.resumeUrl || '',
                 };
 
                 // Map education data
@@ -159,6 +160,7 @@ const CreateCVScreen = () => {
                 major: cvData.jobTitle || ((cvData.educationList && cvData.educationList[0]) ? cvData.educationList[0].major || '' : ''),
                 gpa: (cvData.educationList && cvData.educationList[0] && cvData.educationList[0].gpa) ? parseFloat(cvData.educationList[0].gpa) : null,
                 yearOfStudy: null, // Deprecated in new structure
+                resumeUrl: cvData.resumeUrl, // Preserve existing resumeUrl
             };
 
             console.log('Sending Profile Update:', JSON.stringify(updatePayload));
@@ -726,18 +728,7 @@ const CreateCVScreen = () => {
 
             {/* Bottom Actions Bar */}
             <View style={styles.bottomBar}>
-                <TouchableOpacity style={styles.bottomAction}>
-                    <MaterialCommunityIcons name="dock-window" size={24} color={COLORS.gray600} />
-                    <Text style={styles.bottomActionText}>Đổi mẫu</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.bottomAction}>
-                    <MaterialCommunityIcons name="view-dashboard-variant" size={24} color={COLORS.gray600} />
-                    <Text style={styles.bottomActionText}>Bố cục</Text>
-                </TouchableOpacity>
-                <TouchableOpacity style={styles.bottomAction}>
-                    <Ionicons name="color-palette-outline" size={24} color={COLORS.gray600} />
-                    <Text style={styles.bottomActionText}>Tùy chỉnh</Text>
-                </TouchableOpacity>
+                <View style={{ flex: 1 }} />
                 <TouchableOpacity style={styles.saveButton} onPress={handleSaveCV}>
                     <Text style={styles.saveButtonText}>Lưu</Text>
                 </TouchableOpacity>
@@ -823,7 +814,7 @@ const styles = StyleSheet.create({
     bottomAction: { alignItems: 'center', gap: 4 },
     bottomActionText: { fontSize: 11, color: COLORS.gray600 },
     saveButton: {
-        backgroundColor: '#00C853', paddingVertical: 10, paddingHorizontal: 30, borderRadius: 4,
+        backgroundColor: COLORS.accentOrange, paddingVertical: 10, paddingHorizontal: 30, borderRadius: 4,
     },
     saveButtonText: { color: COLORS.white, fontWeight: 'bold' },
 

@@ -19,7 +19,7 @@ const CV_TEMPLATES = [
         id: '1',
         name: 'Mẫu CV Chuyên Nghiệp',
         usageCount: '>25.000 CV đã tạo',
-        color: '#5D4037', // Brownish
+        color: COLORS.accentOrange, // Orange theme
         tags: ['Chuyên nghiệp'],
         mockImage: 'https://marketplace.canva.com/EAFRuCp3DcY/1/0/1131w/canva-black-white-minimalist-cv-resume-f5JNR-K5jjw.jpg'
     }
@@ -126,13 +126,13 @@ const styles = StyleSheet.create({
         color: COLORS.textPrimary,
     },
     marketingBanner: {
-        backgroundColor: '#E8F5E9',
+        backgroundColor: '#FFF3E0', // Light Orange
         padding: SPACING.md,
     },
     marketingText: {
         fontSize: TYPOGRAPHY.size.md,
         fontWeight: 'bold',
-        color: '#2E7D32',
+        color: '#E65100', // Darker Orange
         marginBottom: 4,
     },
     bulletPoint: {
@@ -142,7 +142,7 @@ const styles = StyleSheet.create({
     },
     linkText: {
         fontSize: TYPOGRAPHY.size.sm,
-        color: '#2E7D32',
+        color: '#E65100', // Darker Orange
         textDecorationLine: 'underline',
         marginTop: 4,
     },
@@ -239,7 +239,7 @@ const styles = StyleSheet.create({
         borderColor: COLORS.gray200,
     },
     useButton: {
-        backgroundColor: '#00C853', // Explicit Green for "Use this template" as per Image 2/3
+        backgroundColor: COLORS.accentOrange, // Orange button
         paddingVertical: 12,
         borderRadius: RADIUS.sm,
         alignItems: 'center',

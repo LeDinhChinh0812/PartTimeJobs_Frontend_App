@@ -17,13 +17,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, EmptyState } from '../components';
-import { getJobById, getMyApplications } from '../services';
+import { getJobById, getMyApplications, chatAPI, withdrawApplication } from '../services'; // Added chatAPI, withdrawApplication
 import { formatSalary, formatDate, formatTimeRange, formatDaysOfWeek } from '../utils/formatters';
+import { useAuth } from '../context'; // Added useAuth
 import { COLORS, TYPOGRAPHY, SPACING } from '../constants';
 
 const JobDetailScreen = () => {
     const route = useRoute();
     const navigation = useNavigation();
+    const { user } = useAuth(); // Get current user
     const { jobId } = route.params;
 
     const [job, setJob] = useState(null);
@@ -31,6 +33,9 @@ const JobDetailScreen = () => {
     const [error, setError] = useState(null);
     const [hasApplied, setHasApplied] = useState(false);
     const [checkingApplication, setCheckingApplication] = useState(true);
+    const [chatLoading, setChatLoading] = useState(false); // New state for chat loading
+    const [appliedApplication, setAppliedApplication] = useState(null); // Store the actual application object
+    const [withdrawing, setWithdrawing] = useState(false);
 
     useEffect(() => {
         fetchJobDetail();
@@ -60,8 +65,13 @@ const JobDetailScreen = () => {
             const response = await getMyApplications(1, 100); // Get all applications
 
             if (response.success && response.data) {
-                const applied = response.data.items?.some(app => app.jobPostId === jobId);
-                setHasApplied(applied);
+                const application = response.data.items?.find(app => app.jobPostId === jobId);
+
+                // Consistency fix: A withdrawn application should not count as "Applied"
+                const isWithdrawn = application?.statusName === 'Withdrawn' || application?.statusName === 'Đã rút';
+
+                setAppliedApplication(application || null);
+                setHasApplied(!!application && !isWithdrawn);
             }
         } catch (err) {
             console.error('Error checking applications:', err);
@@ -88,6 +98,102 @@ const JobDetailScreen = () => {
             jobId: job.id,
             jobTitle: job.title
         });
+    };
+
+    // Chat Handler
+    const handleChat = async () => {
+        console.log('=== CHAT BUTTON CLICKED (JobDetail) ===');
+        console.log('Job raw data:', JSON.stringify(job, null, 2));
+
+        if (!user) {
+            Alert.alert('Yêu cầu đăng nhập', 'Vui lòng đăng nhập để chat với nhà tuyển dụng', [
+                { text: 'Hủy', style: 'cancel' },
+                { text: 'Đăng nhập', onPress: () => navigation.navigate('Login') }
+            ]);
+            return;
+        }
+
+        if (!job.employerId) {
+            Alert.alert('Lỗi', 'Không tìm thấy thông tin nhà tuyển dụng');
+            return;
+        }
+
+        try {
+            setChatLoading(true);
+
+            // Create or get conversation
+            // API requires int for IDs
+            const recipientId = parseInt(
+                job.employerId ||
+                job.recruiterId ||
+                job.userId ||
+                job.employer?.id ||
+                job.company?.employerId,
+                10
+            );
+            const jobPostId = parseInt(job.id || job.jobId || job.jobPostId, 10);
+
+            const response = await chatAPI.createConversation(recipientId, jobPostId);
+
+            if (response && (response.id || response.conversationId || response.conversation)) {
+                const conversationId = response.id || response.conversationId || (response.conversation && (response.conversation.id || response.conversation.conversationId));
+
+                navigation.navigate('Chat', {
+                    screen: 'ChatRoom',
+                    params: {
+                        conversationId: conversationId,
+                        participantName: job.employerName || job.employer_name || job.companyName || job.company_name || job.employer?.fullName || 'Nhà tuyển dụng',
+                        participantAvatar: null,
+                        jobPostId: jobPostId,
+                        jobTitle: job.title || job.jobTitle,
+                    }
+                });
+            } else {
+                console.error('Invalid response format:', response);
+                throw new Error('Invalid response from chat service');
+            }
+        } catch (err) {
+            console.error('Error initiating chat:', err);
+        } finally {
+            setChatLoading(false);
+        }
+    };
+
+    // Withdrawal Handler
+    const handleWithdraw = async () => {
+        if (!appliedApplication) return;
+
+        Alert.alert(
+            'Xác nhận rút đơn',
+            'Bạn có chắc chắn muốn rút đơn ứng tuyển cho công việc này?',
+            [
+                { text: 'Hủy', style: 'cancel' },
+                {
+                    text: 'Rút đơn',
+                    style: 'destructive',
+                    onPress: async () => {
+                        try {
+                            setWithdrawing(true);
+                            const response = await withdrawApplication(appliedApplication.id);
+                            if (response.success) {
+                                Alert.alert('Thành công', 'Đã rút đơn ứng tuyển');
+                                // Refresh application state from server to ensure absolute consistency
+                                await checkIfApplied();
+                                // Refresh job detail to update counts if needed
+                                fetchJobDetail();
+                            } else {
+                                Alert.alert('Lỗi', response.message || 'Không thể rút đơn');
+                            }
+                        } catch (err) {
+                            console.error('Error withdrawing:', err);
+                            Alert.alert('Lỗi', 'Có lỗi xảy ra khi rút đơn');
+                        } finally {
+                            setWithdrawing(false);
+                        }
+                    }
+                }
+            ]
+        );
     };
 
     const renderInfoRow = (icon, label, value) => {
@@ -271,19 +377,43 @@ const JobDetailScreen = () => {
 
             {/* Bottom Actions */}
             <View style={styles.bottomActions}>
-                <Button
-                    onPress={handleApply}
-                    disabled={hasApplied || isExpired || checkingApplication}
-                    style={styles.applyButton}
+                {/* Chat Button */}
+                <TouchableOpacity
+                    style={styles.chatButton}
+                    onPress={handleChat}
+                    disabled={chatLoading}
                 >
-                    {hasApplied
-                        ? 'Đã ứng tuyển'
-                        : isExpired
-                            ? 'Hết hạn'
-                            : checkingApplication
-                                ? 'Đang kiểm tra...'
-                                : 'Ứng tuyển ngay'}
-                </Button>
+                    {chatLoading ? (
+                        <ActivityIndicator size="small" color={COLORS.primary} />
+                    ) : (
+                        <Ionicons name="chatbubble-ellipses-outline" size={24} color={COLORS.primary} />
+                    )}
+                </TouchableOpacity>
+
+                {hasApplied && appliedApplication && (appliedApplication.statusName === 'Pending' || appliedApplication.statusName === 'Đang chờ') ? (
+                    <Button
+                        onPress={handleWithdraw}
+                        disabled={withdrawing}
+                        style={[styles.applyButton, styles.withdrawButton]}
+                        variant="outline"
+                    >
+                        {withdrawing ? 'Đang xử lý...' : 'Hủy ứng tuyển'}
+                    </Button>
+                ) : (
+                    <Button
+                        onPress={handleApply}
+                        disabled={hasApplied || isExpired || checkingApplication}
+                        style={styles.applyButton}
+                    >
+                        {hasApplied
+                            ? 'Đã ứng tuyển'
+                            : isExpired
+                                ? 'Hết hạn'
+                                : checkingApplication
+                                    ? 'Đang kiểm tra...'
+                                    : 'Ứng tuyển ngay'}
+                    </Button>
+                )}
             </View>
         </SafeAreaView>
     );
@@ -501,9 +631,21 @@ const styles = StyleSheet.create({
         backgroundColor: COLORS.white,
         borderTopWidth: 1,
         borderTopColor: COLORS.gray200,
+        flexDirection: 'row', // Align chat and apply buttons horizontally
+        gap: SPACING.md,
+    },
+    chatButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 12,
+        backgroundColor: COLORS.white,
+        borderWidth: 1,
+        borderColor: COLORS.primary,
+        justifyContent: 'center',
+        alignItems: 'center',
     },
     applyButton: {
-        width: '100%',
+        flex: 1, // Take remaining space
     },
 });
 

@@ -93,11 +93,11 @@ const AIChatbotScreen = ({ navigation }) => {
 
             try {
                 // Get AI response
-                const response = await chatbotAPI.sendMessage(trimmedText, newHistory);
+                const response = await chatbotAPI.sendMessage(trimmedText);
 
                 const botMessage = {
                     id: `bot-${Date.now()}`,
-                    message: response.reply || response.message,
+                    message: response.response, // API returns { response: "..." }
                     sender: 'bot',
                     created_at: new Date().toISOString(),
                     suggestions: response.suggestions,
@@ -116,13 +116,24 @@ const AIChatbotScreen = ({ navigation }) => {
                     flatListRef.current?.scrollToEnd({ animated: true });
                 }, 100);
             } catch (error) {
-                // Use warn instead of error to prevent Red Screen in Expo Go
                 console.warn('Error sending message to chatbot:', error.message);
+
+                // Xử lý thông báo lỗi rõ ràng hơn
+                let errorMsg = 'Xin lỗi, tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau.';
+
+                if (error.message.includes('Network error') || error.message.includes('Unable to reach')) {
+                    errorMsg = '⚠️ Không thể kết nối với server AI.\n\nVui lòng kiểm tra:\n• Kết nối internet của bạn\n• Server backend đang chạy\n• URL API trong env.js đúng';
+                } else if (error.message.includes('timeout')) {
+                    errorMsg = '⏱️ Phản hồi từ AI quá lâu. Vui lòng thử lại.';
+                } else if (error.message.includes('401') || error.message.includes('403')) {
+                    errorMsg = '🔒 Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại.';
+                } else if (error.message) {
+                    errorMsg = error.message;
+                }
 
                 const errorMessage = {
                     id: `error-${Date.now()}`,
-                    // Show the real error message if it's from our server, otherwise generic
-                    message: error.message || 'Xin lỗi, tôi đang gặp sự cố kỹ thuật. Vui lòng thử lại sau.',
+                    message: errorMsg,
                     sender: 'bot',
                     created_at: new Date().toISOString(),
                     isError: true,

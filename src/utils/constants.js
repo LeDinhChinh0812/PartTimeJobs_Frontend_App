@@ -33,21 +33,25 @@ export const APPLICATION_STATUS = {
     PENDING: 'Pending',
     REVIEWING: 'Reviewing',
     SHORTLISTED: 'Shortlisted',
-    INTERVIEW_SCHEDULED: 'Interview Scheduled',
-    APPROVED: 'Approved',
+    INTERVIEWING: 'Interviewing',
+    OFFERED: 'Offered',
+    ACCEPTED: 'Accepted',
     REJECTED: 'Rejected',
     WITHDRAWN: 'Withdrawn',
+    EXPIRED: 'Expired',
 };
 
 // Application Status Colors
 export const STATUS_COLORS = {
-    'Pending': '#FFA500',
-    'Reviewing': '#2196F3',
-    'Shortlisted': '#9C27B0',
-    'Interview Scheduled': '#00BCD4',
-    'Approved': '#4CAF50',
-    'Rejected': '#F44336',
-    'Withdrawn': '#9E9E9E',
+    'Pending': '#FFA500',        // Orange
+    'Reviewing': '#2196F3',      // Blue
+    'Shortlisted': '#9C27B0',    // Purple
+    'Interviewing': '#00BCD4',   // Cyan
+    'Offered': '#8BC34A',        // Light Green
+    'Accepted': '#4CAF50',       // Green
+    'Rejected': '#F44336',       // Red
+    'Withdrawn': '#9E9E9E',      // Grey
+    'Expired': '#607D8B',        // Blue Grey
 };
 
 // Application Status Vietnamese
@@ -55,10 +59,26 @@ export const STATUS_LABELS = {
     'Pending': 'Đang chờ',
     'Reviewing': 'Đang xem xét',
     'Shortlisted': 'Lọt vòng trong',
-    'Interview Scheduled': 'Đã hẹn phỏng vấn',
-    'Approved': 'Đã chấp nhận',
+    'Interviewing': 'Đang phỏng vấn',
+    'Interview Scheduled': 'Đang phỏng vấn', // Backward compatibility
+    'Offered': 'Đề nghị việc làm',
+    'Accepted': 'Đã nhận việc',
     'Rejected': 'Bị từ chối',
     'Withdrawn': 'Đã rút',
+    'Expired': 'Hết hạn',
+};
+
+// Map ID to Status Name
+export const STATUS_MAPPING = {
+    1: 'Pending',
+    2: 'Reviewing',
+    3: 'Shortlisted',
+    4: 'Interviewing',
+    5: 'Offered',
+    6: 'Accepted',
+    7: 'Rejected',
+    8: 'Withdrawn',
+    9: 'Expired',
 };
 
 // Salary Periods

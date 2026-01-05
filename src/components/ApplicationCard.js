@@ -8,6 +8,7 @@ import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, TYPOGRAPHY, SPACING } from '../constants';
 import { formatDate } from '../utils/formatters';
+import { STATUS_MAPPING } from '../utils/constants';
 import StatusBadge from './StatusBadge';
 
 const ApplicationCard = ({
@@ -22,6 +23,11 @@ const ApplicationCard = ({
     showDelete = false,
     showReapply = false
 }) => {
+    // Determine status from ID if available, otherwise fallback to name
+    const statusKey = application.statusId && STATUS_MAPPING[application.statusId]
+        ? STATUS_MAPPING[application.statusId]
+        : application.statusName;
+
     const handleWithdraw = () => {
         Alert.alert(
             'Xác nhận rút đơn',
@@ -81,7 +87,7 @@ const ApplicationCard = ({
                         {application.applicantName || 'Ứng viên'}
                     </Text>
                 </View>
-                <StatusBadge status={application.statusName} />
+                <StatusBadge status={statusKey} />
             </View>
 
             <View style={styles.infoRow}>
@@ -100,15 +106,20 @@ const ApplicationCard = ({
                 </View>
             )}
 
-            {showWithdraw && application.statusName === 'Pending' && (
-                <TouchableOpacity
-                    style={styles.withdrawButton}
-                    onPress={handleWithdraw}
-                >
-                    <Ionicons name="close-circle" size={18} color={COLORS.error} />
-                    <Text style={styles.withdrawText}>Rút đơn</Text>
-                </TouchableOpacity>
-            )}
+            {showWithdraw && (
+                application.statusName === 'Pending' ||
+                application.statusName === 'Đang chờ' ||
+                application.statusName === 'Processing' ||
+                application.statusName === 'Đang xử lý'
+            ) && (
+                    <TouchableOpacity
+                        style={styles.withdrawButton}
+                        onPress={handleWithdraw}
+                    >
+                        <Ionicons name="close-circle" size={18} color={COLORS.error} />
+                        <Text style={styles.withdrawText}>Rút đơn</Text>
+                    </TouchableOpacity>
+                )}
 
             {showChat && (
                 <TouchableOpacity

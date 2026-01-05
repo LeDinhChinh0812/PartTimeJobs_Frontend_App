@@ -3,7 +3,7 @@
  * Screen for applying to a job
  */
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
     View,
     Text,
@@ -15,31 +15,65 @@ import {
     Alert,
     KeyboardAvoidingView,
     Platform,
+    Modal,
+    TouchableWithoutFeedback,
+    Linking,
 } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation, useRoute } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, TYPOGRAPHY, SPACING } from '../constants';
 import { Button } from '../components';
 import { createApplication } from '../services';
+import { getMyProfile } from '../services';
+import { useAuth } from '../context';
 
 const ApplyJobScreen = () => {
     const navigation = useNavigation();
     const route = useRoute();
     const { jobId, jobTitle } = route.params;
+    const { user } = useAuth();
 
     const [coverLetter, setCoverLetter] = useState('');
-    const [resumeUrl, setResumeUrl] = useState('');
+    const [selectedCVType, setSelectedCVType] = useState('library'); // 'library' or 'upload'
+    const [selectedCV, setSelectedCV] = useState(null); // Selected CV from library
+    const [uploadedCVUrl, setUploadedCVUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
+    const [modalVisible, setModalVisible] = useState(false);
+    const [profile, setProfile] = useState(null);
+    const [localCVUri, setLocalCVUri] = useState(null);
+
+    // Use App Theme Color  
+    const PRIMARY_COLOR = COLORS.accentOrange || '#FF8A3C';
+
+    useEffect(() => {
+        fetchProfile();
+        // Lấy đường dẫn CV cục bộ
+        AsyncStorage.getItem('LOCAL_CV_URI').then(uri => {
+            if (uri) setLocalCVUri(uri);
+        });
+    }, []);
+
+    const fetchProfile = async () => {
+        try {
+            const response = await getMyProfile();
+            if (response.success && response.data) {
+                setProfile(response.data);
+            }
+        } catch (err) {
+            console.error('Error fetching profile:', err);
+        }
+    };
 
     const validate = () => {
         const newErrors = {};
 
         if (!coverLetter.trim()) {
-            newErrors.coverLetter = 'Vui lòng nhập thư xin việc';
+            newErrors.coverLetter = 'Vui lòng nhập thư giới thiệu';
         } else if (coverLetter.trim().length < 50) {
-            newErrors.coverLetter = 'Thư xin việc phải có ít nhất 50 ký tự';
+            newErrors.coverLetter = 'Thư giới thiệu phải có ít nhất 50 ký tự';
         }
 
         setErrors(newErrors);
@@ -53,10 +87,24 @@ const ApplyJobScreen = () => {
 
         try {
             setLoading(true);
+
+            // Determine which CV URL to use
+            let cvUrl = '';
+            if (selectedCVType === 'upload' && uploadedCVUrl) {
+                cvUrl = uploadedCVUrl;
+            } else if (selectedCVType === 'library' && selectedCV) {
+                // selectedCV can be 'created' or uploaded URL
+                if (selectedCV === 'created') {
+                    cvUrl = ''; // Use profile
+                } else {
+                    cvUrl = selectedCV; // Use uploaded CV URL
+                }
+            }
+
             const response = await createApplication(
                 jobId,
                 coverLetter.trim(),
-                resumeUrl.trim() || null
+                cvUrl || null
             );
 
             if (response.success) {
@@ -96,6 +144,36 @@ const ApplyJobScreen = () => {
         }
     };
 
+    const hasCreatedCV = profile && (profile.major || profile.university);
+    const hasUploadedCV = profile && profile.resumeUrl && profile.resumeUrl.length > 5;
+
+    const handleViewCV = (url) => {
+        if (!url) return;
+
+        // Xử lý File URI cục bộ
+        if (url.startsWith('file://') || url.startsWith('/')) {
+            navigation.navigate('PDFViewer', {
+                uri: url,
+                title: url.split('/').pop()
+            });
+            return;
+        }
+
+        // Nếu là Mock URL, thử mở file cục bộ đã lưu
+        if (url.includes('jobfinder.com') || url.includes('mock') || url.includes('example')) {
+            if (localCVUri) {
+                navigation.navigate('PDFViewer', {
+                    uri: localCVUri,
+                    title: 'CV_Upload.pdf'
+                });
+                return;
+            }
+            Alert.alert('Chưa có file', 'Vui lòng tải lên CV để xem.');
+        } else {
+            Linking.openURL(url);
+        }
+    };
+
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
             <KeyboardAvoidingView
@@ -119,83 +197,114 @@ const ApplyJobScreen = () => {
                     contentContainerStyle={styles.content}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Job Title */}
-                    <View style={styles.jobInfo}>
-                        <Text style={styles.label}>Vị trí ứng tuyển</Text>
-                        <Text style={styles.jobTitle}>{jobTitle}</Text>
-                    </View>
-
-                    {/* CV Section */}
+                    {/* CV Application Section */}
                     <View style={styles.section}>
-                        <Text style={styles.label}>CV / Hồ sơ</Text>
-                        <Text style={styles.uploadHint}>Chọn CV để ứng tuyển</Text>
+                        <Text style={styles.label}>CV ứng tuyển</Text>
 
-                        {/* Options */}
-                        <View style={styles.cvOptions}>
-                            {/* Create/Edit CV Button */}
-                            <TouchableOpacity
-                                style={styles.cvOptionButton}
-                                onPress={() => navigation.navigate('CreateCV')}
-                            >
-                                <View style={[styles.iconContainer, { backgroundColor: COLORS.accentPurpleLight }]}>
-                                    <Ionicons name="create-outline" size={24} color={COLORS.accentPurple} />
+                        {/* CV from Library Option */}
+                        <TouchableOpacity
+                            style={[
+                                styles.cvOptionCard,
+                                selectedCVType === 'library' && styles.selectedCard
+                            ]}
+                            onPress={() => setSelectedCVType('library')}
+                        >
+                            <View style={styles.radioContainer}>
+                                <View style={[
+                                    styles.radioOuter,
+                                    selectedCVType === 'library' && { borderColor: PRIMARY_COLOR }
+                                ]}>
+                                    {selectedCVType === 'library' && (
+                                        <View style={[styles.radioInner, { backgroundColor: PRIMARY_COLOR }]} />
+                                    )}
                                 </View>
-                                <View style={styles.optionTextContainer}>
-                                    <Text style={styles.optionTitle}>Điền Form CV mẫu</Text>
-                                    <Text style={styles.optionDesc}>Cập nhật thông tin profile để dùng làm CV</Text>
-                                </View>
-                                <Ionicons name="chevron-forward" size={20} color={COLORS.gray400} />
-                            </TouchableOpacity>
-
-                            {/* Upload Link Button */}
-                            <TouchableOpacity
-                                style={styles.cvOptionButton}
-                                onPress={() => {
-                                    Alert.prompt(
-                                        'Link CV',
-                                        'Dán link CV vào đây (Google Drive, Dropbox...)',
-                                        (text) => setResumeUrl(text),
-                                        'plain-text',
-                                        resumeUrl
-                                    );
-                                }}
-                            >
-                                <View style={[styles.iconContainer, { backgroundColor: COLORS.accentOrangeLight }]}>
-                                    <Ionicons name="link-outline" size={24} color={COLORS.accentOrange} />
-                                </View>
-                                <View style={styles.optionTextContainer}>
-                                    <Text style={styles.optionTitle}>Upload Link CV</Text>
-                                    <Text style={styles.optionDesc}>Sử dụng CV có sẵn (PDF link)</Text>
-                                </View>
-                                {resumeUrl ? (
-                                    <Ionicons name="checkmark-circle" size={24} color={COLORS.success} />
-                                ) : (
-                                    <Ionicons name="add-circle-outline" size={24} color={COLORS.gray400} />
-                                )}
-                            </TouchableOpacity>
-                        </View>
-
-                        {/* Selected CV Display */}
-                        {resumeUrl && (
-                            <View style={styles.selectedCV}>
-                                <Text style={styles.selectedLabel}>CV đang chọn:</Text>
-                                <Text style={styles.selectedValue} numberOfLines={1}>{resumeUrl}</Text>
-                                <TouchableOpacity onPress={() => setResumeUrl('')}>
-                                    <Text style={styles.removeText}>Xóa</Text>
-                                </TouchableOpacity>
                             </View>
-                        )}
-                        {!resumeUrl && (
-                            <Text style={styles.hint}>Nếu không nhập link CV, hệ thống sẽ sử dụng thông tin trong Profile của bạn.</Text>
-                        )}
+                            <View style={styles.cvOptionContent}>
+                                <Text style={styles.cvOptionTitle}>CV từ thư viện của tôi</Text>
+
+                                {selectedCVType === 'library' && (
+                                    <View style={{ marginTop: 8, paddingLeft: 0 }}>
+                                        {hasCreatedCV && (
+                                            <TouchableOpacity
+                                                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}
+                                                onPress={() => setSelectedCV('created')}
+                                            >
+                                                <Ionicons
+                                                    name={selectedCV === 'created' ? "radio-button-on" : "radio-button-off"}
+                                                    size={20}
+                                                    color={PRIMARY_COLOR}
+                                                />
+                                                <Text style={{ marginLeft: 8, fontSize: 14, color: COLORS.textPrimary, flex: 1 }}>
+                                                    CV Online: {profile?.fullName || 'User'}
+                                                </Text>
+                                                <TouchableOpacity onPress={() => navigation.navigate('CVPreview', { profile })}>
+                                                    <Text style={{ color: PRIMARY_COLOR, fontWeight: 'bold', fontSize: 13, paddingHorizontal: 8 }}>Xem</Text>
+                                                </TouchableOpacity>
+                                            </TouchableOpacity>
+                                        )}
+                                        {hasUploadedCV && (
+                                            <TouchableOpacity
+                                                style={{ flexDirection: 'row', alignItems: 'center', paddingVertical: 8 }}
+                                                onPress={() => setSelectedCV(profile.resumeUrl)}
+                                            >
+                                                <Ionicons
+                                                    name={selectedCV !== 'created' ? "radio-button-on" : "radio-button-off"}
+                                                    size={20}
+                                                    color={PRIMARY_COLOR}
+                                                />
+                                                <Text style={{ marginLeft: 8, fontSize: 14, color: COLORS.textPrimary, flex: 1 }}>
+                                                    CV Upload: {profile.resumeUrl.split('/').pop()}
+                                                </Text>
+                                                <TouchableOpacity onPress={() => handleViewCV(profile.resumeUrl)}>
+                                                    <Text style={{ color: PRIMARY_COLOR, fontWeight: 'bold', fontSize: 13, paddingHorizontal: 8 }}>Xem</Text>
+                                                </TouchableOpacity>
+                                            </TouchableOpacity>
+                                        )}
+                                        {!hasCreatedCV && !hasUploadedCV && (
+                                            <Text style={styles.cvOptionHint}>Chưa có CV nào trong thư viện</Text>
+                                        )}
+                                    </View>
+                                )}
+                            </View>
+                        </TouchableOpacity>
+
+                        {/* Upload CV Option */}
+                        <TouchableOpacity
+                            style={[
+                                styles.cvOptionCard,
+                                selectedCVType === 'upload' && styles.selectedCard
+                            ]}
+                            onPress={() => setSelectedCVType('upload')}
+                        >
+                            <View style={styles.radioContainer}>
+                                <View style={[
+                                    styles.radioOuter,
+                                    selectedCVType === 'upload' && { borderColor: PRIMARY_COLOR }
+                                ]}>
+                                    {selectedCVType === 'upload' && (
+                                        <View style={[styles.radioInner, { backgroundColor: PRIMARY_COLOR }]} />
+                                    )}
+                                </View>
+                            </View>
+                            <View style={styles.cvOptionContent}>
+                                <Text style={styles.cvOptionTitle}>Tải CV lên từ điện thoại</Text>
+                                {selectedCVType === 'upload' && !uploadedCVUrl && (
+                                    <View style={styles.uploadArea}>
+                                        <Ionicons name="cloud-upload-outline" size={32} color={PRIMARY_COLOR} />
+                                        <Text style={styles.uploadText}>Nhấn để tải lên</Text>
+                                        <Text style={styles.uploadHint}>Hỗ trợ định dạng .doc, .docx, pdf có kích thước dưới 5MB</Text>
+                                    </View>
+                                )}
+                            </View>
+                        </TouchableOpacity>
                     </View>
 
-                    {/* Information Section */}
+                    {/* Cover Letter Section */}
                     <View style={styles.section}>
                         <Text style={styles.label}>
-                            Information <Text style={styles.required}>*</Text>
+                            Thư giới thiệu <Text style={styles.required}>*</Text>
                         </Text>
-                        <Text style={styles.uploadHint}>Explain why you are the right person for this job</Text>
+                        <Text style={styles.uploadHint}>Viết giới thiệu ngắn gọn về bản thân (điểm mạnh, điểm yếu) và nêu rõ mong muốn, lý do làm việc tại công ty này</Text>
                         <TextInput
                             style={[
                                 styles.textArea,
@@ -217,30 +326,26 @@ const ApplyJobScreen = () => {
                         {errors.coverLetter ? (
                             <Text style={styles.errorText}>{errors.coverLetter}</Text>
                         ) : null}
-                        <Text style={styles.hint}>
-                            Tối thiểu 50 ký tự ({coverLetter.length}/50)
-                        </Text>
-                    </View>
-
-                    {/* Info Note */}
-                    <View style={styles.infoBox}>
-                        <Ionicons name="information-circle" size={20} color={COLORS.accentOrange} />
-                        <Text style={styles.infoText}>
-                            Nhà tuyển dụng sẽ xem xét đơn ứng tuyển của bạn và liên hệ qua email hoặc số điện thoại trong hồ sơ.
-                        </Text>
                     </View>
                 </ScrollView>
 
                 {/* Submit Button */}
                 <View style={styles.footer}>
-                    <Button
-                        title={loading ? 'Đang gửi...' : 'Gửi đơn ứng tuyển'}
+                    <TouchableOpacity
+                        style={[styles.submitButtonDirect, loading && styles.disabledButton]}
                         onPress={handleSubmit}
                         disabled={loading}
-                        style={styles.submitButton}
-                    />
+                    >
+                        {loading ? (
+                            <ActivityIndicator color="#FFF" />
+                        ) : (
+                            <Text style={styles.submitButtonText}>Ứng tuyển</Text>
+                        )}
+                    </TouchableOpacity>
                 </View>
             </KeyboardAvoidingView>
+
+
         </SafeAreaView>
     );
 };
@@ -281,21 +386,8 @@ const styles = StyleSheet.create({
     content: {
         padding: SPACING.lg,
     },
-    jobInfo: {
-        backgroundColor: COLORS.white,
-        padding: SPACING.md,
-        borderRadius: 12,
-        marginBottom: SPACING.lg,
-    },
-    jobTitle: {
-        fontSize: TYPOGRAPHY.size.lg,
-        fontWeight: TYPOGRAPHY.weight.bold,
-        fontFamily: TYPOGRAPHY.fontFamily.heading,
-        color: COLORS.accentOrange,
-        marginTop: 4,
-    },
     section: {
-        marginBottom: SPACING.lg,
+        marginBottom: SPACING.xl,
     },
     label: {
         fontSize: TYPOGRAPHY.size.md,
@@ -306,17 +398,6 @@ const styles = StyleSheet.create({
     },
     required: {
         color: COLORS.error,
-    },
-    input: {
-        backgroundColor: COLORS.white,
-        borderWidth: 1,
-        borderColor: COLORS.gray300,
-        borderRadius: 8,
-        paddingHorizontal: SPACING.md,
-        paddingVertical: SPACING.sm,
-        fontSize: TYPOGRAPHY.size.md,
-        fontFamily: TYPOGRAPHY.fontFamily.primary,
-        color: COLORS.textPrimary,
     },
     textArea: {
         backgroundColor: COLORS.white,
@@ -339,78 +420,11 @@ const styles = StyleSheet.create({
         color: COLORS.error,
         marginTop: 4,
     },
-    hint: {
-        fontSize: TYPOGRAPHY.size.sm,
-        fontFamily: TYPOGRAPHY.fontFamily.primary,
-        color: COLORS.textSecondary,
-        marginTop: 4,
-    },
     uploadHint: {
         fontSize: TYPOGRAPHY.size.sm,
         fontFamily: TYPOGRAPHY.fontFamily.primary,
         color: COLORS.textSecondary,
         marginBottom: SPACING.sm,
-    },
-    uploadButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'center',
-        backgroundColor: COLORS.white,
-        borderWidth: 2,
-        borderColor: COLORS.accentOrange,
-        borderStyle: 'dashed',
-        borderRadius: 12,
-        padding: SPACING.lg,
-        gap: SPACING.sm,
-    },
-    uploadText: {
-        fontSize: TYPOGRAPHY.size.md,
-        fontWeight: TYPOGRAPHY.weight.medium,
-        color: COLORS.accentOrange,
-    },
-    uploadedFile: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        backgroundColor: '#FFF3E0',
-        borderRadius: 12,
-        padding: SPACING.md,
-        gap: SPACING.sm,
-    },
-    fileIcon: {
-        width: 40,
-        height: 40,
-        borderRadius: 8,
-        backgroundColor: COLORS.white,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    fileInfo: {
-        flex: 1,
-    },
-    fileName: {
-        fontSize: TYPOGRAPHY.size.md,
-        fontWeight: TYPOGRAPHY.weight.semibold,
-        color: COLORS.textPrimary,
-    },
-    fileSize: {
-        fontSize: TYPOGRAPHY.size.sm,
-        color: COLORS.textSecondary,
-        marginTop: 2,
-    },
-    infoBox: {
-        flexDirection: 'row',
-        backgroundColor: '#FFF3E0',
-        padding: SPACING.md,
-        borderRadius: 8,
-        marginTop: SPACING.md,
-    },
-    infoText: {
-        flex: 1,
-        fontSize: TYPOGRAPHY.size.sm,
-        fontFamily: TYPOGRAPHY.fontFamily.primary,
-        color: COLORS.textPrimary,
-        marginLeft: SPACING.sm,
-        lineHeight: 20,
     },
     footer: {
         padding: SPACING.lg,
@@ -421,11 +435,116 @@ const styles = StyleSheet.create({
     submitButton: {
         width: '100%',
     },
-    cvOptions: {
-        gap: SPACING.md,
+    cvOptionCard: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        padding: SPACING.md,
+        backgroundColor: COLORS.white,
+        borderRadius: 12,
+        borderWidth: 1.5,
+        borderColor: COLORS.gray200,
         marginBottom: SPACING.md,
     },
-    cvOptionButton: {
+    selectedCard: {
+        borderColor: COLORS.accentOrange,
+        backgroundColor: '#FFF8F5',
+    },
+    radioContainer: {
+        marginRight: SPACING.md,
+    },
+    radioOuter: {
+        width: 24,
+        height: 24,
+        borderRadius: 12,
+        borderWidth: 2,
+        borderColor: COLORS.gray300,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    radioInner: {
+        width: 12,
+        height: 12,
+        borderRadius: 6,
+    },
+    cvOptionContent: {
+        flex: 1,
+    },
+    cvOptionTitle: {
+        fontSize: TYPOGRAPHY.size.md,
+        fontWeight: TYPOGRAPHY.weight.semibold,
+        color: COLORS.textPrimary,
+        marginBottom: 2,
+    },
+    cvOptionSelected: {
+        fontSize: TYPOGRAPHY.size.sm,
+        color: COLORS.accentOrange,
+        fontWeight: '500',
+    },
+    cvOptionHint: {
+        fontSize: TYPOGRAPHY.size.sm,
+        color: COLORS.textSecondary,
+    },
+    uploadArea: {
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingVertical: SPACING.lg,
+        borderWidth: 1.5,
+        borderStyle: 'dashed',
+        borderColor: COLORS.accentOrange,
+        borderRadius: 8,
+        marginTop: SPACING.sm,
+        backgroundColor: '#FFF8F5',
+    },
+    uploadText: {
+        fontSize: TYPOGRAPHY.size.md,
+        color: COLORS.textPrimary,
+        marginTop: SPACING.sm,
+        fontWeight: '500',
+    },
+    uploadHint: {
+        fontSize: TYPOGRAPHY.size.sm,
+        color: COLORS.textSecondary,
+        marginTop: 4,
+        textAlign: 'center',
+        paddingHorizontal: SPACING.md,
+    },
+
+    // Modal Styles
+    modalOverlay: {
+        flex: 1,
+        backgroundColor: 'rgba(0,0,0,0.5)',
+        justifyContent: 'flex-end',
+    },
+    modalContent: {
+        backgroundColor: COLORS.white,
+        borderTopLeftRadius: 20,
+        borderTopRightRadius: 20,
+        padding: SPACING.lg,
+        paddingBottom: 40,
+        maxHeight: '70%',
+    },
+    modalHeader: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        marginBottom: SPACING.lg,
+    },
+    modalTitle: {
+        fontSize: TYPOGRAPHY.size.lg,
+        fontWeight: TYPOGRAPHY.weight.bold,
+        color: COLORS.textPrimary,
+    },
+    cvSection: {
+        marginBottom: SPACING.lg,
+    },
+    cvSectionTitle: {
+        fontSize: TYPOGRAPHY.size.xs,
+        fontWeight: TYPOGRAPHY.weight.bold,
+        color: COLORS.textSecondary,
+        marginBottom: SPACING.sm,
+        letterSpacing: 0.5,
+    },
+    cvItem: {
         flexDirection: 'row',
         alignItems: 'center',
         padding: SPACING.md,
@@ -433,52 +552,67 @@ const styles = StyleSheet.create({
         borderRadius: 12,
         borderWidth: 1,
         borderColor: COLORS.gray200,
+        marginBottom: SPACING.sm,
     },
-    iconContainer: {
-        width: 48,
-        height: 48,
-        borderRadius: 24,
-        alignItems: 'center',
-        justifyContent: 'center',
-        marginRight: SPACING.md,
+    selectedCVItem: {
+        borderColor: COLORS.accentOrange,
+        backgroundColor: '#FFF8F5',
     },
-    optionTextContainer: {
+    cvItemContent: {
         flex: 1,
+        marginLeft: SPACING.sm,
     },
-    optionTitle: {
+    cvItemTitle: {
         fontSize: TYPOGRAPHY.size.md,
         fontWeight: TYPOGRAPHY.weight.semibold,
         color: COLORS.textPrimary,
         marginBottom: 2,
     },
-    optionDesc: {
+    cvItemDate: {
         fontSize: TYPOGRAPHY.size.sm,
         color: COLORS.textSecondary,
     },
-    selectedCV: {
-        flexDirection: 'row',
+    viewLink: {
+        fontSize: TYPOGRAPHY.size.sm,
+        fontWeight: TYPOGRAPHY.weight.semibold,
+        marginLeft: SPACING.sm,
+    },
+    emptyCVContainer: {
         alignItems: 'center',
-        backgroundColor: '#E8F5E9',
-        padding: SPACING.md,
-        borderRadius: 8,
-        marginTop: SPACING.sm,
+        justifyContent: 'center',
+        paddingVertical: SPACING.xl * 2,
     },
-    selectedLabel: {
-        fontSize: TYPOGRAPHY.size.sm,
+    emptyCVText: {
+        fontSize: TYPOGRAPHY.size.md,
         color: COLORS.textSecondary,
-        marginRight: SPACING.sm,
+        marginTop: SPACING.md,
+        marginBottom: SPACING.lg,
     },
-    selectedValue: {
-        flex: 1,
-        fontSize: TYPOGRAPHY.size.sm,
-        fontWeight: '500',
-        color: COLORS.textPrimary,
-        marginRight: SPACING.sm,
+    createCVButton: {
+        paddingHorizontal: SPACING.lg,
+        paddingVertical: SPACING.sm,
+        borderRadius: 20,
     },
-    removeText: {
-        fontSize: TYPOGRAPHY.size.sm,
-        color: COLORS.error,
-        fontWeight: '500',
+    createCVText: {
+        color: COLORS.white,
+        fontSize: TYPOGRAPHY.size.md,
+        fontWeight: TYPOGRAPHY.weight.semibold,
+    },
+    submitButtonDirect: {
+        backgroundColor: COLORS.primary || '#1E0E62',
+        paddingVertical: 16,
+        borderRadius: 12,
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: '100%',
+    },
+    submitButtonText: {
+        color: '#FFFFFF',
+        fontSize: 16,
+        fontWeight: 'bold',
+    },
+    disabledButton: {
+        opacity: 0.7,
     },
 });
 

@@ -10,8 +10,10 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import * as DocumentPicker from 'expo-document-picker';
-import { COLORS } from '../constants'; // Ensure existing constants
-import { createOrUpdateProfile } from '../services';
+import * as FileSystem from 'expo-file-system/legacy';
+import AsyncStorage from '@react-native-async-storage/async-storage';
+import { COLORS } from '../constants';
+import { createOrUpdateProfile, getMyProfile } from '../services';
 
 const UploadCVScreen = () => {
     const navigation = useNavigation();
@@ -61,10 +63,52 @@ const UploadCVScreen = () => {
         try {
             setUploading(true);
 
-            // SIMULATION: Mock URL for now as requested by user context implies specific backend flow
-            const mockUrl = `https://jobfinder.com/cv/${fileName}`;
+            // 1. Lấy thông tin hồ sơ hiện tại để bảo toàn dữ liệu
+            let existingParams = {};
+            try {
+                const profileRes = await getMyProfile();
+                if (profileRes.success && profileRes.data) {
+                    const p = profileRes.data;
+                    existingParams = {
+                        fullName: p.fullName,
+                        email: p.email,
+                        phoneNumber: p.phoneNumber,
+                        address: p.address,
+                        bio: p.bio,
+                        dateOfBirth: p.dateOfBirth ? p.dateOfBirth.split('T')[0] : null,
+                        university: p.university,
+                        major: p.major,
+                        gpa: p.gpa,
+                        skills: p.skills, // API usually expects [{skillName: '...'}], keep as is
+                    };
+                }
+            } catch (fetchErr) {
+                console.warn('Could not fetch existing profile, proceeding with partial update', fetchErr);
+            }
+
+            // Lưu file vào bộ nhớ máy để xem được
+            const fileNameClean = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
+            const localUri = FileSystem.documentDirectory + fileNameClean;
+
+            // Xóa file cũ nếu tồn tại
+            try {
+                await FileSystem.deleteAsync(localUri, { idempotent: true });
+            } catch (e) { /* ignore */ }
+
+            // Copy file vào thư mục ứng dụng
+            await FileSystem.copyAsync({
+                from: fileUri,
+                to: localUri
+            });
+
+            // Lưu đường dẫn vào AsyncStorage để truy xuất sau
+            await AsyncStorage.setItem('LOCAL_CV_URI', localUri);
+
+            // Gửi lên backend (dùng local URI hoặc mock URL tùy backend)
+            const mockUrl = localUri;
 
             const updatePayload = {
+                ...existingParams,
                 resumeUrl: mockUrl
             };
 
@@ -88,7 +132,6 @@ const UploadCVScreen = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            {/* Header */}
             <View style={styles.header}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color="#000" />
@@ -97,7 +140,6 @@ const UploadCVScreen = () => {
                 <View style={{ width: 24 }} />
             </View>
 
-            {/* Banner */}
             <View style={styles.banner}>
                 <View style={styles.bannerContent}>
                     <Text style={styles.bannerTitle}>Upload CV để các cơ hội việc làm tự tìm đến bạn</Text>
@@ -105,14 +147,13 @@ const UploadCVScreen = () => {
                         Giảm đến 50% thời gian cần thiết để tìm được một công việc phù hợp
                     </Text>
                 </View>
-                <Ionicons name="document-text" size={80} color="#4CAF50" style={styles.bannerIcon} />
+                <Ionicons name="document-text" size={80} color={COLORS.accentOrange} />
             </View>
 
-            {/* Content */}
             <View style={styles.content}>
                 {fileUri ? (
                     <View style={styles.fileItem}>
-                        <Ionicons name="document-text-outline" size={32} color="#4CAF50" />
+                        <Ionicons name="document-text-outline" size={32} color={COLORS.accentOrange} />
                         <View style={styles.fileInfo}>
                             <Text style={styles.fileName} numberOfLines={1}>{fileName}</Text>
                             <Text style={styles.fileSize}>{formatSize(fileSize)}</Text>
@@ -134,7 +175,6 @@ const UploadCVScreen = () => {
                 )}
             </View>
 
-            {/* Footer */}
             <View style={styles.footer}>
                 <TouchableOpacity
                     style={[styles.uploadButton, (!fileUri || uploading) && styles.disabledButton]}
@@ -154,30 +194,30 @@ const styles = StyleSheet.create({
     container: { flex: 1, backgroundColor: '#FFF' },
     header: {
         flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between',
-        paddingHorizontal: 16, paddingVertical: 12, // borderBottomWidth: 1, borderBottomColor: '#EEE',
+        paddingHorizontal: 16, paddingVertical: 12,
     },
     headerTitle: { fontSize: 18, fontWeight: 'bold' },
 
     banner: {
-        backgroundColor: '#E8F5E9', padding: 20, flexDirection: 'row',
+        backgroundColor: '#FFF3E0', padding: 20, flexDirection: 'row',
         alignItems: 'center', justifyContent: 'space-between',
     },
     bannerContent: { flex: 1, marginRight: 10 },
-    bannerTitle: { fontSize: 16, fontWeight: 'bold', color: '#1B5E20', marginBottom: 8 },
-    bannerSubtitle: { fontSize: 13, color: '#4CAF50' },
+    bannerTitle: { fontSize: 16, fontWeight: 'bold', color: '#E65100', marginBottom: 8 },
+    bannerSubtitle: { fontSize: 13, color: COLORS.accentOrange },
     bannerIcon: {},
 
     content: { flex: 1, padding: 20 },
 
     uploadBox: {
-        borderWidth: 1, borderColor: '#A5D6A7', borderStyle: 'dashed', borderRadius: 8,
+        borderWidth: 1, borderColor: '#FFCC80', borderStyle: 'dashed', borderRadius: 8,
         height: 200, justifyContent: 'center', alignItems: 'center', backgroundColor: '#FFF',
         padding: 20,
     },
     cloudIconBg: {
-        backgroundColor: '#81C784', borderRadius: 50, padding: 10, marginBottom: 12,
+        backgroundColor: COLORS.accentOrange, borderRadius: 50, padding: 10, marginBottom: 12,
     },
-    uploadTitle: { fontSize: 16, fontWeight: 'bold', color: '#2E7D32', marginBottom: 8 },
+    uploadTitle: { fontSize: 16, fontWeight: 'bold', color: '#E65100', marginBottom: 8 },
     uploadHint: { fontSize: 12, color: '#757575', textAlign: 'center' },
 
     fileItem: {
@@ -190,9 +230,9 @@ const styles = StyleSheet.create({
 
     footer: { padding: 20 },
     uploadButton: {
-        backgroundColor: '#00C853', paddingVertical: 14, borderRadius: 8, alignItems: 'center',
+        backgroundColor: COLORS.accentOrange, paddingVertical: 14, borderRadius: 8, alignItems: 'center',
     },
-    disabledButton: { backgroundColor: '#A5D6A7' },
+    disabledButton: { backgroundColor: '#FFE0B2' },
     uploadButtonText: { color: '#FFF', fontWeight: 'bold', fontSize: 16 },
 });
 

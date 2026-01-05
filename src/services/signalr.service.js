@@ -20,8 +20,9 @@ class SignalRService {
      * Initialize SignalR connection
      */
     async connect() {
-        if (this.connection && this.isConnected) {
+        if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
             console.log('SignalR already connected');
+            this.isConnected = true;
             return this.connection;
         }
 
@@ -30,19 +31,17 @@ class SignalRService {
             this.connection = new signalR.HubConnectionBuilder()
                 .withUrl(`${API_BASE_URL}/hubs/chat`, {
                     accessTokenFactory: async () => {
-                        const token = await getAccessToken();
-                        return token;
+                        try {
+                            const token = await getAccessToken();
+                            return token;
+                        } catch (e) {
+                            console.error('SignalR: Error in accessTokenFactory', e);
+                            return null;
+                        }
                     },
-                    skipNegotiation: false,
-                    // Use LongPolling for React Native compatibility
-                    transport: signalR.HttpTransportType.LongPolling
+                    // Remove forced LongPolling to allow WebSockets (preferred for real-time)
                 })
-                .withAutomaticReconnect({
-                    nextRetryDelayInMilliseconds: (retryContext) => {
-                        // Exponential backoff
-                        return Math.min(1000 * Math.pow(2, retryContext.previousRetryCount), 30000);
-                    }
-                })
+                .withAutomaticReconnect()
                 .configureLogging(signalR.LogLevel.Information)
                 .build();
 
@@ -73,14 +72,16 @@ class SignalRService {
 
         // Receive message
         this.connection.on('ReceiveMessage', (message) => {
-            console.log('Received message:', message);
-            this.notifyMessageHandlers(message);
+            console.log('SignalR: Received raw message:', message);
+            if (message) {
+                this.notifyMessageHandlers(message);
+            }
         });
 
         // User typing
-        this.connection.on('UserTyping', (data) => {
-            console.log('User typing:', data);
-            this.notifyTypingHandlers(data);
+        this.connection.on('UserTyping', (userId, isTyping) => {
+            console.log(`SignalR: User ${userId} typing status: ${isTyping}`);
+            this.notifyTypingHandlers({ userId, isTyping });
         });
 
         // Connection closed
@@ -137,7 +138,8 @@ class SignalRService {
         try {
             await this.connection.invoke('SendTypingIndicator', conversationId, isTyping);
         } catch (error) {
-            console.error('Error sending typing indicator:', error);
+            // Silently log error as this is a non-critical feature
+            console.warn('SignalR: SendTypingIndicator not supported or failed', error.message);
         }
     }
 
@@ -147,15 +149,14 @@ class SignalRService {
      */
     async joinConversation(conversationId) {
         if (!this.connection || !this.isConnected) {
-            throw new Error('SignalR not connected');
+            return;
         }
 
         try {
             await this.connection.invoke('JoinConversation', conversationId);
             console.log(`Joined conversation: ${conversationId}`);
         } catch (error) {
-            console.error('Error joining conversation:', error);
-            throw error;
+            console.warn(`SignalR: JoinConversation failed for ${conversationId}`, error.message);
         }
     }
 
@@ -172,7 +173,7 @@ class SignalRService {
             await this.connection.invoke('LeaveConversation', conversationId);
             console.log(`Left conversation: ${conversationId}`);
         } catch (error) {
-            console.error('Error leaving conversation:', error);
+            console.warn(`SignalR: LeaveConversation failed for ${conversationId}`, error.message);
         }
     }
 
