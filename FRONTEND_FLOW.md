@@ -4,7 +4,7 @@ Tài liệu này mô tả chi tiết luồng hoạt động, kiến trúc và c�
 
 ---
 
-## 1. Tổng Quan Công Nghệ (Tech Stack)
+## 1. Tổng Quan Công Nghệ (Tech Stack) 111
 
 *   **Framework**: React Native (Sử dụng **Expo SDK 50+**).
 *   **Ngôn ngữ**: JavaScript (ES6+).
