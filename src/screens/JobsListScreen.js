@@ -103,7 +103,11 @@ const JobsListScreen = () => {
                 if (page === 1) {
                     setJobs(newJobs);
                 } else {
-                    setJobs(prev => [...prev, ...newJobs]);
+                    setJobs(prev => {
+                        const existingIds = new Set(prev.map(job => job.id));
+                        const uniqueNewJobs = newJobs.filter(job => !existingIds.has(job.id));
+                        return [...prev, ...uniqueNewJobs];
+                    });
                 }
 
                 setHasMore(newJobs.length === DEFAULT_PAGE_SIZE);

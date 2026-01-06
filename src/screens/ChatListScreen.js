@@ -71,8 +71,14 @@ const ChatListScreen = ({ navigation }) => {
             console.log('DEBUG: ChatList data raw:', JSON.stringify(data, null, 2));
             const rawList = Array.isArray(data) ? data : (data.conversations || data.items || []);
             const list = rawList.map(normalizeConversation);
-            setConversations(list);
-            setFilteredConversations(list);
+
+            // Deduplicate logic
+            const uniqueList = list.filter((item, index, self) =>
+                index === self.findIndex((t) => String(t.id) === String(item.id))
+            );
+
+            setConversations(uniqueList);
+            setFilteredConversations(uniqueList);
         } catch (error) {
             console.error('Error loading conversations:', error);
         } finally {
@@ -261,7 +267,7 @@ const ChatListScreen = ({ navigation }) => {
             <FlatList
                 data={filteredConversations}
                 renderItem={renderConversationItem}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item, index) => item.id ? `${item.id}-${index}` : index.toString()}
                 ListHeaderComponent={renderAIChatbotCard}
                 ListEmptyComponent={
                     <View style={styles.emptyContainer}>

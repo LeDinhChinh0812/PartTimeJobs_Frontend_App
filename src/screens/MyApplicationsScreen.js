@@ -51,10 +51,26 @@ const MyApplicationsScreen = () => {
                     console.log('Has employerId?', !!newApplications[0].employerId);
                 }
 
+                // Deduplicate new items internally first logic
+                const uniqueNewApps = newApplications.filter((item, index, self) =>
+                    index === self.findIndex((t) => String(t.id) === String(item.id))
+                );
+
+                // Add unique key to each item to prevent duplicate key issues
+                const timestamp = Date.now();
+                const appsWithUniqueKeys = uniqueNewApps.map((item, idx) => ({
+                    ...item,
+                    _uniqueKey: `${item.id}_${item.jobPostId || 'nojob'}_${page}_${idx}_${timestamp}`
+                }));
+
                 if (page === 1) {
-                    setApplications(newApplications);
+                    setApplications(appsWithUniqueKeys);
                 } else {
-                    setApplications(prev => [...prev, ...newApplications]);
+                    setApplications(prev => {
+                        const existingIds = new Set(prev.map(item => String(item.id)));
+                        const newItems = appsWithUniqueKeys.filter(item => !existingIds.has(String(item.id)));
+                        return [...prev, ...newItems];
+                    });
                 }
 
                 setHasMore(newApplications.length === DEFAULT_PAGE_SIZE);
@@ -297,7 +313,7 @@ const MyApplicationsScreen = () => {
             <FlatList
                 data={applications}
                 renderItem={renderApplicationCard}
-                keyExtractor={(item) => item.id.toString()}
+                keyExtractor={(item) => item._uniqueKey || `fallback_${item.id}_${Date.now()}`}
                 contentContainerStyle={[
                     styles.listContent,
                     applications.length === 0 && styles.emptyList
