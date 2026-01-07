@@ -1,6 +1,6 @@
 /**
- * HomeScreen Component
- * Main dashboard with job categories and recommended jobs
+ * Component Màn hình chính
+ * Bảng điều khiển chính với danh mục việc làm và việc làm đề xuất
  */
 
 import React, { useState, useCallback } from 'react';
@@ -22,7 +22,7 @@ import { JobCategoryCard, JobCard, SearchBar, EmptyState } from '../components';
 import { getAllJobs } from '../services';
 import { COLORS, TYPOGRAPHY, SPACING } from '../constants';
 
-// Popular categories
+// Danh mục phổ biến
 const POPULAR_CATEGORIES = [
     { id: 1, name: 'Graphics & Design', count: '257 vị trí', icon: 'color-palette-outline', type: 'Design', iconColor: '#3B82F6', bgColor: '#EFF6FF' },
     { id: 2, name: 'Code & Programing', count: '212 vị trí', icon: 'code-slash-outline', type: 'IT', iconColor: '#6366F1', bgColor: '#EEF2FF' },
@@ -47,7 +47,7 @@ const HomeScreen = () => {
         try {
             isRefreshing ? setRefreshing(true) : setLoading(true);
 
-            const response = await getAllJobs(1, 6); // Get first 6 jobs
+            const response = await getAllJobs(1, 6); // Lấy 6 việc làm đầu tiên
 
             if (response.success && response.data) {
                 setJobs(response.data.items || []);
@@ -55,9 +55,9 @@ const HomeScreen = () => {
             }
         } catch (err) {
             console.error('Error fetching jobs:', err);
-            // Instead of showing error, silently fail with empty data
+            // Thay vì hiển thị lỗi, âm thầm thất bại với dữ liệu rỗng
             setJobs([]);
-            setError(null); // Don't show error to user
+            setError(null); // Không hiển thị lỗi cho người dùng
         } finally {
             setLoading(false);
             setRefreshing(false);
@@ -98,7 +98,7 @@ const HomeScreen = () => {
         navigation.navigate('Jobs');
     };
 
-    // Get recommended/featured jobs (first 3)
+    // Lấy việc làm đề xuất/nổi bật (3 việc làm đầu tiên)
     const recommendedJobs = jobs.slice(0, 3);
 
     return (
@@ -115,7 +115,7 @@ const HomeScreen = () => {
                     />
                 }
             >
-                {/* Header */}
+                {/* Tiêu đề */}
                 <View style={styles.header}>
                     <View>
                         <Text style={styles.greeting}>Xin chào</Text>
@@ -131,7 +131,7 @@ const HomeScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Search Bar */}
+                {/* Thanh tìm kiếm */}
                 <View style={styles.searchSection}>
                     <SearchBar
                         placeholder="Tìm kiếm công việc..."
@@ -143,7 +143,7 @@ const HomeScreen = () => {
                     />
                 </View>
 
-                {/* Popular Categories Section */}
+                {/* Phần Danh mục phổ biến */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Danh mục phổ biến</Text>
@@ -169,7 +169,7 @@ const HomeScreen = () => {
                     </View>
                 </View>
 
-                {/* Recommended Jobs */}
+                {/* Việc làm đề xuất */}
                 <View style={styles.section}>
                     <View style={styles.sectionHeader}>
                         <Text style={styles.sectionTitle}>Việc làm đề xuất</Text>

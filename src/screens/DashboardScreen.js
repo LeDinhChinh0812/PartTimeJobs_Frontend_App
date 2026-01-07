@@ -1,6 +1,6 @@
 /**
- * Dashboard Screen
- * Migrated from dashboard.html
+ * Màn hình Dashboard
+ * Được chuyển từ dashboard.html
  */
 
 import React from 'react';
@@ -26,11 +26,11 @@ const DashboardScreen = () => {
         <SafeAreaView style={styles.container} edges={['top', 'bottom']}>
             <ScrollView contentContainerStyle={styles.scrollContent}>
                 <View style={styles.content}>
-                    {/* Welcome Section */}
+                    {/* Phần chào mừng */}
                     <Text style={styles.title}>Dashboard</Text>
                     <Text style={styles.subtitle}>Welcome, {user?.fullName}!</Text>
 
-                    {/* User Info Card */}
+                    {/* Thẻ thông tin người dùng */}
                     <View style={styles.card}>
                         <Text style={styles.cardTitle}>User Information</Text>
 
@@ -57,14 +57,14 @@ const DashboardScreen = () => {
                         </View>
                     </View>
 
-                    {/* Placeholder Section */}
+                    {/* Phần Placeholder */}
                     <View style={styles.placeholderCard}>
                         <Text style={styles.placeholderText}>
                             Job listings and other features will be implemented here
                         </Text>
                     </View>
 
-                    {/* Logout Button */}
+                    {/* Nút Đăng xuất */}
                     <Button
                         variant="primary"
                         onPress={handleLogout}

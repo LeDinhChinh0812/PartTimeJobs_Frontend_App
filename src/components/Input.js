@@ -1,5 +1,5 @@
 /**
- * Custom Input Component
+ * Component Input tùy chỉnh
  */
 
 import React, { useState } from 'react';

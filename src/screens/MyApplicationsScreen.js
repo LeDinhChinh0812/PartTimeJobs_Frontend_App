@@ -1,6 +1,6 @@
 /**
  * MyApplicationsScreen
- * Display user's job applications
+ * Hiển thị các đơn ứng tuyển của người dùng
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -43,7 +43,7 @@ const MyApplicationsScreen = () => {
             if (response.success && response.data) {
                 const newApplications = response.data.items || [];
 
-                // DEBUG: Check if employerId exists
+                // DEBUG: Kiểm tra xem employerId có tồn tại không
                 console.log('=== Applications Data ===');
                 console.log('Total applications:', newApplications.length);
                 if (newApplications.length > 0) {
@@ -51,12 +51,12 @@ const MyApplicationsScreen = () => {
                     console.log('Has employerId?', !!newApplications[0].employerId);
                 }
 
-                // Deduplicate new items internally first logic
+                // Logic loại bỏ mục mới trùng lặp nội bộ trước
                 const uniqueNewApps = newApplications.filter((item, index, self) =>
                     index === self.findIndex((t) => String(t.id) === String(item.id))
                 );
 
-                // Add unique key to each item to prevent duplicate key issues
+                // Thêm key duy nhất cho mỗi mục để tránh vấn đề trùng lặp key
                 const timestamp = Date.now();
                 const appsWithUniqueKeys = uniqueNewApps.map((item, idx) => ({
                     ...item,
@@ -90,7 +90,7 @@ const MyApplicationsScreen = () => {
         }
     };
 
-    // Fetch applications when screen is focused
+    // Tải đơn ứng tuyển khi màn hình được focus
     useFocusEffect(
         useCallback(() => {
             fetchApplications(1);
@@ -130,7 +130,7 @@ const MyApplicationsScreen = () => {
 
     const handleChatWithEmployer = async (application) => {
         try {
-            // Debug log
+            // Ghi log debug
             console.log('=== CHAT BUTTON CLICKED ===');
             console.log('Application raw data:', JSON.stringify(application, null, 2));
 
@@ -151,7 +151,7 @@ const MyApplicationsScreen = () => {
                 application.employer?.fullName ||
                 'Nhà tuyển dụng';
 
-            // Check if we have employerId now
+            // Kiểm tra xem đã có employerId chưa
             if (!employerId) {
                 console.log('Debugging missing employerId. Application structure:', JSON.stringify(application, null, 2));
                 Alert.alert(
@@ -163,8 +163,8 @@ const MyApplicationsScreen = () => {
 
             console.log('Creating conversation with employer:', employerId);
 
-            // Create or get conversation with employer
-            // Note: API requires int for IDs
+            // Tạo hoặc lấy cuộc trò chuyện với nhà tuyển dụng
+            // Lưu ý: API yêu cầu ID dạng số nguyên
             const recipientId = parseInt(employerId, 10);
             const jobPostId = application.jobPostId ? parseInt(application.jobPostId, 10) : null;
 
@@ -176,7 +176,7 @@ const MyApplicationsScreen = () => {
                 console.log('Navigating to ChatRoom...');
                 const conversationId = response.id || response.conversationId || response.conversation?.id;
 
-                // Navigate to ChatRoom
+                // Điều hướng đến phòng chat
                 navigation.navigate('Chat', {
                     screen: 'ChatRoom',
                     params: {
@@ -218,15 +218,15 @@ const MyApplicationsScreen = () => {
     };
 
     const handleReapply = (application) => {
-        // Navigate to job detail to apply again
+        // Điều hướng đến chi tiết công việc để ứng tuyển lại
         navigation.navigate('JobDetail', {
             jobId: application.jobPostId,
-            reapply: true  // Flag to show application form
+            reapply: true  // Cờ để hiển thị form ứng tuyển
         });
     };
 
     const renderApplicationCard = ({ item }) => {
-        // Use statusId for logic if available
+        // Sử dụng statusId cho logic nếu có
         const statusId = item.statusId;
 
         let isWithdrawn, isPending;
@@ -237,7 +237,7 @@ const MyApplicationsScreen = () => {
             // 1 = Pending, 2 = Reviewing
             isPending = statusId === 1 || statusId === 2;
         } else {
-            // Fallback to name-based logic (Legacy/Safety)
+            // Fallback sang logic dựa trên tên (Cũ/An toàn)
             isWithdrawn = item.statusName === 'Withdrawn' || item.statusName === 'Đã rút';
             isPending = item.statusName === 'Pending' ||
                 item.statusName === 'Reviewing' ||
@@ -247,7 +247,7 @@ const MyApplicationsScreen = () => {
                 item.statusName === 'Đang xử lý';
         }
 
-        // Feature flags - enable when backend ready
+        // Cờ tính năng - bật khi backend sẵn sàng
         const DELETE_ENABLED = false; // TODO: Set true khi backend có DELETE endpoint
         const REAPPLY_ENABLED = true;
 

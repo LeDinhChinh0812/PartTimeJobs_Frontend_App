@@ -1,6 +1,6 @@
 /**
- * Storage Service
- * Wrapper around AsyncStorage for token and user data management
+ * Dịch vụ Lưu trữ
+ * Wrapper cho AsyncStorage để quản lý token và dữ liệu người dùng
  */
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -12,7 +12,7 @@ const STORAGE_KEYS = {
 };
 
 /**
- * Save data to storage
+ * Lưu dữ liệu vào storage
  */
 export const saveData = async (key, value) => {
     try {
@@ -25,7 +25,7 @@ export const saveData = async (key, value) => {
 };
 
 /**
- * Get data from storage
+ * Lấy dữ liệu từ storage
  */
 export const getData = async (key) => {
     try {
@@ -38,7 +38,7 @@ export const getData = async (key) => {
 };
 
 /**
- * Remove data from storage
+ * Xóa dữ liệu khỏi storage
  */
 export const removeData = async (key) => {
     try {
@@ -49,7 +49,7 @@ export const removeData = async (key) => {
 };
 
 /**
- * Clear all storage
+ * Xóa tất cả storage
  */
 export const clearAll = async () => {
     try {
@@ -60,7 +60,7 @@ export const clearAll = async () => {
 };
 
 /**
- * Save authentication tokens
+ * Lưu token xác thực
  */
 export const saveTokens = async (accessToken, refreshToken) => {
     try {
@@ -73,35 +73,35 @@ export const saveTokens = async (accessToken, refreshToken) => {
 };
 
 /**
- * Get access token
+ * Lấy access token
  */
 export const getAccessToken = async () => {
     return await getData(STORAGE_KEYS.ACCESS_TOKEN);
 };
 
 /**
- * Get refresh token
+ * Lấy refresh token
  */
 export const getRefreshToken = async () => {
     return await getData(STORAGE_KEYS.REFRESH_TOKEN);
 };
 
 /**
- * Save user data
+ * Lưu dữ liệu người dùng
  */
 export const saveUserData = async (userData) => {
     await saveData(STORAGE_KEYS.USER_DATA, userData);
 };
 
 /**
- * Get user data
+ * Lấy dữ liệu người dùng
  */
 export const getUserData = async () => {
     return await getData(STORAGE_KEYS.USER_DATA);
 };
 
 /**
- * Clear all authentication data
+ * Xóa tất cả dữ liệu xác thực
  */
 export const clearAuthData = async () => {
     try {

@@ -1,6 +1,6 @@
 /**
- * FilterModal Component
- * Modal for filtering job search results
+ * Component FilterModal
+ * Modal lọc kết quả tìm kiếm việc làm
  */
 
 import React, { useState } from 'react';

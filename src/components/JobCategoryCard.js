@@ -1,6 +1,6 @@
 /**
- * JobCategoryCard Component
- * Card displaying job category with count
+ * Component JobCategoryCard
+ * Thẻ hiển thị danh mục việc làm với số lượng
  */
 
 import React from 'react';

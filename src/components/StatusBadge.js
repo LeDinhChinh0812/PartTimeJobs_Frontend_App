@@ -1,6 +1,6 @@
 /**
- * StatusBadge Component
- * Displays application status with appropriate color
+ * Component StatusBadge
+ * Hiển thị trạng thái đơn ứng tuyển với màu sắc phù hợp
  */
 
 import React from 'react';

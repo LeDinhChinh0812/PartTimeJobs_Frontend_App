@@ -1,6 +1,6 @@
 /**
- * SignalR Service
- * Handles real-time chat communication via SignalR
+ * Dịch vụ SignalR
+ * Xử lý chat thời gian thực qua SignalR
  */
 
 import * as signalR from '@microsoft/signalr';
@@ -17,7 +17,7 @@ class SignalRService {
     }
 
     /**
-     * Initialize SignalR connection
+     * Khởi tạo kết nối SignalR
      */
     async connect() {
         if (this.connection && this.connection.state === signalR.HubConnectionState.Connected) {
@@ -65,12 +65,12 @@ class SignalRService {
     }
 
     /**
-     * Setup SignalR event handlers
+     * Thiết lập các trình xử lý sự kiện SignalR
      */
     setupEventHandlers() {
         if (!this.connection) return;
 
-        // Receive message
+        // Nhận tin nhắn
         this.connection.on('ReceiveMessage', (message) => {
             console.log('SignalR: Received raw message:', message);
             if (message) {
@@ -78,27 +78,27 @@ class SignalRService {
             }
         });
 
-        // User typing
+        // Người dùng đang gõ
         this.connection.on('UserTyping', (userId, isTyping) => {
             console.log(`SignalR: User ${userId} typing status: ${isTyping}`);
             this.notifyTypingHandlers({ userId, isTyping });
         });
 
-        // Connection closed
+        // Kết nối đã đóng
         this.connection.onclose((error) => {
             console.log('SignalR connection closed', error);
             this.isConnected = false;
             this.notifyConnectionState('disconnected', error);
         });
 
-        // Reconnecting
+        // Đang kết nối lại
         this.connection.onreconnecting((error) => {
             console.log('SignalR reconnecting...', error);
             this.isConnected = false;
             this.notifyConnectionState('reconnecting', error);
         });
 
-        // Reconnected
+        // Đã kết nối lại
         this.connection.onreconnected((connectionId) => {
             console.log('SignalR reconnected:', connectionId);
             this.isConnected = true;
@@ -107,7 +107,7 @@ class SignalRService {
     }
 
     /**
-     * Send a message
+     * Gửi tin nhắn
      * @param {string} conversationId - Conversation ID
      * @param {string} message - Message text
      */
@@ -126,7 +126,7 @@ class SignalRService {
     }
 
     /**
-     * Send typing indicator
+     * Gửi trạng thái đang gõ
      * @param {string} conversationId - Conversation ID
      * @param {boolean} isTyping - Is typing status
      */
@@ -144,7 +144,7 @@ class SignalRService {
     }
 
     /**
-     * Join a conversation room
+     * Tham gia phòng chat
      * @param {string} conversationId - Conversation ID
      */
     async joinConversation(conversationId) {
@@ -161,7 +161,7 @@ class SignalRService {
     }
 
     /**
-     * Leave a conversation room
+     * Rời phòng chat
      * @param {string} conversationId - Conversation ID
      */
     async leaveConversation(conversationId) {
@@ -178,7 +178,7 @@ class SignalRService {
     }
 
     /**
-     * Disconnect SignalR
+     * Ngắt kết nối SignalR
      */
     async disconnect() {
         if (this.connection) {
@@ -193,7 +193,7 @@ class SignalRService {
     }
 
     /**
-     * Register message handler
+     * Đăng ký xử lý tin nhắn
      * @param {Function} handler - Handler function
      * @returns {Function} Unsubscribe function
      */
@@ -207,7 +207,7 @@ class SignalRService {
     }
 
     /**
-     * Register typing handler
+     * Đăng ký xử lý trạng thái gõ
      * @param {Function} handler - Handler function
      * @returns {Function} Unsubscribe function
      */
@@ -220,7 +220,7 @@ class SignalRService {
     }
 
     /**
-     * Register connection state handler
+     * Đăng ký xử lý trạng thái kết nối
      * @param {Function} handler - Handler function
      * @returns {Function} Unsubscribe function
      */
@@ -233,7 +233,7 @@ class SignalRService {
     }
 
     /**
-     * Notify message handlers
+     * Thông báo cho các trình xử lý tin nhắn
      */
     notifyMessageHandlers(message) {
         this.messageHandlers.forEach(handler => {
@@ -246,7 +246,7 @@ class SignalRService {
     }
 
     /**
-     * Notify typing handlers
+     * Thông báo cho các trình xử lý trạng thái gõ
      */
     notifyTypingHandlers(data) {
         this.typingHandlers.forEach(handler => {
@@ -259,7 +259,7 @@ class SignalRService {
     }
 
     /**
-     * Notify connection state handlers
+     * Thông báo cho các trình xử lý trạng thái kết nối
      */
     notifyConnectionState(state, error = null) {
         this.connectionStateHandlers.forEach(handler => {
@@ -272,7 +272,7 @@ class SignalRService {
     }
 
     /**
-     * Get connection state
+     * Lấy trạng thái kết nối
      */
     getConnectionState() {
         if (!this.connection) return 'disconnected';
@@ -292,6 +292,6 @@ class SignalRService {
     }
 }
 
-// Export singleton instance
+// Xuất instance singleton
 const signalRService = new SignalRService();
 export default signalRService;

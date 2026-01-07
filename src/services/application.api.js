@@ -1,12 +1,12 @@
 /**
- * Application API Service
- * Handles all application-related API calls
+ * Dịch vụ API Ứng tuyển
+ * Xử lý các cuộc gọi API liên quan đến ứng tuyển
  */
 
 import { apiClient } from './api.service';
 
 /**
- * 3.1 Get application details
+ * 3.1 Lấy chi tiết đơn ứng tuyển
  * @param {number} id - Application ID
  * @returns {Promise<object>} Application details
  */
@@ -20,7 +20,7 @@ export const getApplicationById = async (id) => {
 };
 
 /**
- * 3.2 Get applications by Job Post (Employer)
+ * 3.2 Lấy danh sách ứng tuyển theo bài đăng việc làm (Nhà tuyển dụng)
  * @param {number} jobPostId
  * @param {number} pageNumber
  * @param {number} pageSize
@@ -38,7 +38,7 @@ export const getApplicationsByJobPost = async (jobPostId, pageNumber = 1, pageSi
 };
 
 /**
- * 3.3 Get my applications (Student)
+ * 3.3 Lấy danh sách đơn ứng tuyển của tôi (Sinh viên)
  * @param {number} pageNumber - Page number (default: 1)
  * @param {number} pageSize - Items per page (default: 10)
  * @returns {Promise<object>} User's applications with pagination
@@ -55,7 +55,7 @@ export const getMyApplications = async (pageNumber = 1, pageSize = 10) => {
 };
 
 /**
- * 3.4 Submit application (Student)
+ * 3.4 Nộp đơn ứng tuyển (Sinh viên)
  * @param {number} jobPostId - Job post ID to apply for
  * @param {string} coverLetter - Cover letter text
  * @param {string} resumeUrl - Resume URL (optional)
@@ -80,7 +80,7 @@ export const createApplication = async (jobPostId, coverLetter, resumeUrl = null
 };
 
 /**
- * 3.5 Update application status (Employer)
+ * 3.5 Cập nhật trạng thái ứng tuyển (Nhà tuyển dụng)
  * @param {number} id - Application ID
  * @param {number} statusId - 1=Pending, 2=Approved, 3=Rejected
  * @param {string} notes - Notes
@@ -99,7 +99,7 @@ export const updateApplicationStatus = async (id, statusId, notes = '') => {
 };
 
 /**
- * 3.6 Withdraw application (Student)
+ * 3.6 Rút đơn ứng tuyển (Sinh viên)
  * @param {number} id - Application ID
  * @returns {Promise<object>} Withdraw response
  */
@@ -121,7 +121,7 @@ export const withdrawApplication = async (id) => {
 };
 
 /**
- * Delete an application (Legacy/Admin)
+ * Xóa đơn ứng tuyển (Legacy/Admin)
  * @param {number} id - Application ID
  * @returns {Promise<object>} Deletion response
  */

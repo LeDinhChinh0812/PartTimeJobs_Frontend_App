@@ -1,6 +1,6 @@
 /**
- * Signup Screen
- * Migrated from signup.html
+ * Màn hình Đăng ký
+ * Chuyển đổi từ signup.html
  */
 
 import React, { useState } from 'react';
@@ -30,10 +30,10 @@ const SignupScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
 
     const handleSignup = async () => {
-        // Clear previous errors
+        // Xóa lỗi trước đó
         setErrors({});
 
-        // Validate form
+        // Kiểm tra form
         const validation = validateForm(
             { fullName, email, password, confirmPassword: password },
             'signup'
@@ -88,10 +88,10 @@ const SignupScreen = ({ navigation }) => {
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.formContainer}>
-                        {/* Header */}
+                        {/* Tiêu đề */}
                         <Text style={styles.title}>Create Account</Text>
 
-                        {/* Full Name Input */}
+                        {/* Nhập Họ tên */}
                         <Input
                             label="Full Name"
                             placeholder="Nguyễn Văn A"
@@ -101,7 +101,7 @@ const SignupScreen = ({ navigation }) => {
                             error={errors.fullName}
                         />
 
-                        {/* Email Input */}
+                        {/* Nhập Email */}
                         <Input
                             label="Email"
                             placeholder="vidu@email.com"
@@ -112,7 +112,7 @@ const SignupScreen = ({ navigation }) => {
                             error={errors.email}
                         />
 
-                        {/* Password Input */}
+                        {/* Nhập Mật khẩu */}
                         <Input
                             label="Password"
                             placeholder="••••••••••"
@@ -123,7 +123,7 @@ const SignupScreen = ({ navigation }) => {
                             error={errors.password}
                         />
 
-                        {/* Signup Button */}
+                        {/* Nút Đăng ký */}
                         <Button
                             variant="primary"
                             onPress={handleSignup}
@@ -133,7 +133,7 @@ const SignupScreen = ({ navigation }) => {
                             SIGN UP
                         </Button>
 
-                        {/* Google Sign Up Button */}
+                        {/* Nút Đăng ký Google */}
                         <Button
                             variant="google"
                             onPress={handleGoogleSignUp}
@@ -145,7 +145,7 @@ const SignupScreen = ({ navigation }) => {
                             SIGN UP WITH GOOGLE
                         </Button>
 
-                        {/* Login Link */}
+                        {/* Liên kết Đăng nhập */}
                         <View style={styles.footer}>
                             <Text style={styles.footerText}>
                                 Already have an account?{' '}

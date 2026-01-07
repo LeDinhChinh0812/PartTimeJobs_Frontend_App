@@ -1,6 +1,6 @@
 /**
- * App Navigator
- * Main navigation configuration with Bottom Tabs for authenticated users
+ * Điều hướng ứng dụng
+ * Cấu hình điều hướng chính với Bottom Tabs cho người dùng đã đăng nhập
  */
 
 import React from 'react';
@@ -25,7 +25,6 @@ import {
     ProfileScreen,
     EditProfileScreen,
     CVPreviewScreen,
-    TestAPIScreen,
     ChatListScreen,
     ChatRoomScreen,
     AIChatbotScreen,
@@ -39,7 +38,7 @@ import {
 const Stack = createNativeStackNavigator();
 const Tab = createBottomTabNavigator();
 
-// Home Stack Navigator
+// Navigator Stack Trang chủ
 const HomeStack = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -53,7 +52,7 @@ const HomeStack = () => {
     );
 };
 
-// Jobs Stack Navigator
+// Navigator Stack Việc làm
 const JobsStack = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -66,7 +65,7 @@ const JobsStack = () => {
     );
 };
 
-// Applications Stack Navigator
+// Navigator Stack Ứng tuyển
 const ApplicationsStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="ApplicationsList" component={MyApplicationsScreen} />
@@ -75,7 +74,7 @@ const ApplicationsStack = () => (
     </Stack.Navigator>
 );
 
-// Save Jobs Stack Navigator
+// Navigator Stack Việc làm đã lưu
 const SaveJobsStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
         {/* Placeholder for SavedJobs - reusing JobsListScreen for now to prevent crash */}
@@ -85,7 +84,7 @@ const SaveJobsStack = () => (
     </Stack.Navigator>
 );
 
-// Chat Stack Navigator
+// Navigator Stack Nhắn tin
 const ChatStack = () => (
     <Stack.Navigator screenOptions={{ headerShown: false }}>
         <Stack.Screen name="ChatList" component={ChatListScreen} />
@@ -94,7 +93,7 @@ const ChatStack = () => (
     </Stack.Navigator>
 );
 
-// Profile Stack Navigator
+// Navigator Stack Hồ sơ
 const ProfileStack = () => {
     return (
         <Stack.Navigator screenOptions={{ headerShown: false }}>
@@ -116,7 +115,7 @@ const ProfileStack = () => {
     );
 };
 
-// Bottom Tab Navigator for authenticated users
+// Bottom Tab Navigator cho người dùng đã xác thực
 const MainTabs = () => (
     <Tab.Navigator
         screenOptions={({ route }) => ({
@@ -167,11 +166,11 @@ const MainTabs = () => (
         />
     </Tab.Navigator >
 );
-// Main App Navigator
+// Navigator Chính của Ứng dụng
 const AppNavigator = () => {
     const { isAuthenticated, isLoading } = useAuth();
 
-    // Loading state
+    // Trạng thái đang tải
     if (isLoading) {
         return (
             <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
@@ -189,17 +188,16 @@ const AppNavigator = () => {
                 }}
             >
                 {!isAuthenticated ? (
-                    // Auth Stack - For unauthenticated users
+                    // Auth Stack - Cho người dùng chưa đăng nhập
                     <>
                         <Stack.Screen name="Onboarding" component={OnboardingScreen} />
-                        <Stack.Screen name="TestAPI" component={TestAPIScreen} />
                         <Stack.Screen name="Login" component={LoginScreen} />
                         <Stack.Screen name="Signup" component={SignupScreen} />
                         <Stack.Screen name="ForgotPassword" component={ForgotPasswordScreen} />
                         <Stack.Screen name="ResetConfirmation" component={ResetConfirmationScreen} />
                     </>
                 ) : (
-                    // Main App with Bottom Tabs - For authenticated users
+                    // Ứng dụng chính với Bottom Tabs - Cho người dùng đã xác thực
                     <Stack.Screen name="MainTabs" component={MainTabs} />
                 )}
             </Stack.Navigator>

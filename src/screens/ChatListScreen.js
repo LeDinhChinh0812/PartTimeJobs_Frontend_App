@@ -15,7 +15,7 @@ import { chatAPI } from '../services';
 import { COLORS, FONT_SIZES, SPACING } from '../constants';
 
 /**
- * Normalizes conversation object to handle inconsistent API keys
+ * Chuẩn hóa đối tượng cuộc trò chuyện để xử lý các khóa API không nhất quán
  */
 const normalizeConversation = (conv) => {
     if (!conv) return null;
@@ -54,8 +54,8 @@ const normalizeConversation = (conv) => {
 };
 
 /**
- * Chat List Screen
- * Displays all conversations for the current user
+ * Màn hình danh sách chat
+ * Hiển thị tất cả các cuộc trò chuyện cho người dùng hiện tại
  */
 const ChatListScreen = ({ navigation }) => {
     const [conversations, setConversations] = useState([]);
@@ -64,7 +64,7 @@ const ChatListScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
-    // Load conversations
+    // Tải danh sách cuộc trò chuyện
     const loadConversations = useCallback(async () => {
         try {
             const data = await chatAPI.getConversations();
@@ -72,7 +72,7 @@ const ChatListScreen = ({ navigation }) => {
             const rawList = Array.isArray(data) ? data : (data.conversations || data.items || []);
             const list = rawList.map(normalizeConversation);
 
-            // Deduplicate logic
+            // Logic loại bỏ trùng lặp
             const uniqueList = list.filter((item, index, self) =>
                 index === self.findIndex((t) => String(t.id) === String(item.id))
             );
@@ -91,13 +91,13 @@ const ChatListScreen = ({ navigation }) => {
         loadConversations();
     }, [loadConversations]);
 
-    // Handle refresh
+    // Xử lý làm mới
     const onRefresh = useCallback(() => {
         setRefreshing(true);
         loadConversations();
     }, [loadConversations]);
 
-    // Search conversations
+    // Tìm kiếm cuộc trò chuyện
     const handleSearch = useCallback((query) => {
         setSearchQuery(query);
         if (query.trim() === '') {
@@ -110,7 +110,7 @@ const ChatListScreen = ({ navigation }) => {
         }
     }, [conversations]);
 
-    // Navigate to chat room
+    // Điều hướng đến phòng chat
     const openChat = useCallback((conversation) => {
         navigation.navigate('ChatRoom', {
             conversationId: conversation.id,
@@ -121,12 +121,12 @@ const ChatListScreen = ({ navigation }) => {
         });
     }, [navigation]);
 
-    // Navigate to AI Chatbot
+    // Điều hướng đến Chatbot AI
     const openAIChatbot = useCallback(() => {
         navigation.navigate('AIChatbot');
     }, [navigation]);
 
-    // Format timestamp
+    // Định dạng thời gian
     const formatTime = (timestamp) => {
         if (!timestamp) return '';
         const date = new Date(timestamp);
@@ -155,7 +155,7 @@ const ChatListScreen = ({ navigation }) => {
         }
     };
 
-    // Render conversation item
+    // Render mục cuộc trò chuyện
     const renderConversationItem = ({ item }) => (
         <TouchableOpacity
             style={styles.conversationItem}
@@ -209,7 +209,7 @@ const ChatListScreen = ({ navigation }) => {
         </TouchableOpacity>
     );
 
-    // Render AI Chatbot card
+    // Render thẻ Chatbot AI
     const renderAIChatbotCard = () => (
         <TouchableOpacity
             style={styles.aiChatbotCard}
@@ -238,7 +238,7 @@ const ChatListScreen = ({ navigation }) => {
 
     return (
         <View style={styles.container}>
-            {/* Header */}
+            {/* Tiêu đề */}
             <View style={styles.header}>
                 <Text style={styles.headerTitle}>Tin nhắn</Text>
                 <TouchableOpacity style={styles.newChatButton}>
@@ -246,7 +246,7 @@ const ChatListScreen = ({ navigation }) => {
                 </TouchableOpacity>
             </View>
 
-            {/* Search Bar */}
+            {/* Thanh tìm kiếm */}
             <View style={styles.searchContainer}>
                 <Ionicons name="search" size={20} color={COLORS.gray} />
                 <TextInput
@@ -263,7 +263,7 @@ const ChatListScreen = ({ navigation }) => {
                 )}
             </View>
 
-            {/* Conversations List */}
+            {/* Danh sách cuộc trò chuyện */}
             <FlatList
                 data={filteredConversations}
                 renderItem={renderConversationItem}

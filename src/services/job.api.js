@@ -1,12 +1,12 @@
 /**
- * Job API Service
- * Handles all job-related API calls
+ * Dịch vụ API Việc làm
+ * Xử lý các cuộc gọi API liên quan đến việc làm
  */
 
 import { apiClient } from './api.service';
 
 /**
- * Get all job posts with pagination
+ * Lấy tất cả bài đăng việc làm có phân trang
  * @param {number} pageNumber - Page number (default: 1)
  * @param {number} pageSize - Items per page (default: 10)
  * @returns {Promise<object>} Jobs list with pagination
@@ -23,7 +23,7 @@ export const getAllJobs = async (pageNumber = 1, pageSize = 10) => {
 };
 
 /**
- * Search job posts with filters
+ * Tìm kiếm bài đăng việc làm với bộ lọc
  * @param {object} searchParams - Search parameters
  * @param {string} searchParams.SearchTerm - Search term for job title/description
  * @param {number} searchParams.PageNumber - Page number
@@ -44,7 +44,7 @@ export const searchJobs = async (searchParams) => {
 };
 
 /**
- * Get job post by ID
+ * Lấy bài đăng việc làm theo ID
  * @param {number} id - Job post ID
  * @returns {Promise<object>} Job post details
  */
@@ -58,7 +58,7 @@ export const getJobById = async (id) => {
 };
 
 /**
- * Get job posts by company ID
+ * Lấy bài đăng việc làm theo ID công ty
  * @param {number} companyId - Company ID
  * @param {number} pageNumber - Page number (default: 1)
  * @param {number} pageSize - Items per page (default: 10)

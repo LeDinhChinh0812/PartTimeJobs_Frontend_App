@@ -1,6 +1,6 @@
 /**
- * ProfileScreen
- * Display and manage user profile
+ * Màn hình Hồ sơ
+ * Hiển thị và quản lý hồ sơ người dùng
  */
 
 import React, { useState, useEffect } from 'react';
@@ -32,7 +32,7 @@ const ProfileScreen = () => {
     const [refreshing, setRefreshing] = useState(false);
     const [stats, setStats] = useState({ applications: 0, saved: 0 });
 
-    // Toggles state
+    // Trạng thái bật tắt
     const [isJobSeeking, setIsJobSeeking] = useState(true);
     const [allowContact, setAllowContact] = useState(false);
 
@@ -119,7 +119,7 @@ const ProfileScreen = () => {
         );
     }
 
-    // Default icon color - Reverted to App Theme (Orange)
+    // Màu icon mặc định - Quay lại chủ đề ứng dụng (Cam)
     const ICON_COLOR = COLORS.accentOrange;
     const ICON_BG_COLOR = COLORS.accentOrangeLight; // Using the constant for light orange
 
@@ -131,7 +131,7 @@ const ProfileScreen = () => {
                     <RefreshControl refreshing={refreshing} onRefresh={handleRefresh} colors={[ICON_COLOR]} />
                 }
             >
-                {/* Header Profile Section */}
+                {/* Phần Header Hồ sơ */}
                 <View style={styles.headerCard}>
                     <View style={styles.profileRow}>
                         <View style={styles.avatarContainer}>
@@ -151,7 +151,7 @@ const ProfileScreen = () => {
                     </View>
                 </View>
 
-                {/* CV Section */}
+                {/* Phần CV */}
                 <View style={[styles.sectionHeader, { marginTop: SPACING.lg }]}>
                     <Text style={styles.sectionTitle}>CV của tôi</Text>
                 </View>
@@ -161,7 +161,7 @@ const ProfileScreen = () => {
                     {renderMenuItem('cloud-upload-outline', 'CV đã tải lên', () => navigation.navigate('MyCV'))}
                 </View>
 
-                {/* Job Management Grid */}
+                {/* Lưới quản lý tìm việc */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Quản lý tìm việc</Text>
                 </View>
@@ -193,7 +193,7 @@ const ProfileScreen = () => {
                     </TouchableOpacity>
                 </View>
 
-                {/* Utilities / Settings */}
+                {/* Tiện ích / Cài đặt */}
                 <View style={[styles.sectionContainer, { marginTop: SPACING.lg }]}>
                     {renderMenuItem('information-circle-outline', 'Về ứng dụng', () => { })}
                     <View style={styles.divider} />
@@ -204,7 +204,7 @@ const ProfileScreen = () => {
                     {renderMenuItem('help-circle-outline', 'Trợ giúp', () => { })}
                 </View>
 
-                {/* Logout */}
+                {/* Đăng xuất */}
                 <TouchableOpacity style={styles.logoutButton} onPress={handleLogout}>
                     <Text style={styles.logoutText}>Đăng xuất</Text>
                     <Ionicons name="log-out-outline" size={20} color={COLORS.textSecondary} />

@@ -1,6 +1,6 @@
 /**
- * EmptyState Component
- * Displays when there's no data to show
+ * Component EmptyState
+ * Hiển thị khi không có dữ liệu
  */
 
 import React from 'react';

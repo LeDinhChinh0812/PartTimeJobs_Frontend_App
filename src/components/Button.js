@@ -1,5 +1,5 @@
 /**
- * Custom Button Component
+ * Component Nút tùy chỉnh
  */
 
 import React from 'react';

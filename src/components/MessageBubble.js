@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZES, SPACING } from '../constants';
 
 /**
- * Message Bubble Component
- * Reusable component for displaying chat messages
+ * Component MessageBubble
+ * Component hiển thị tin nhắn chat
  */
 const MessageBubble = ({
     message,

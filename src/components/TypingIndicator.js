@@ -4,8 +4,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZES, SPACING } from '../constants';
 
 /**
- * Typing Indicator Component
- * Animated typing indicator for chat interfaces
+ * Component TypingIndicator
+ * Hiệu ứng "đang gõ" cho giao diện chat
  */
 const TypingIndicator = ({
     userName = 'AI',

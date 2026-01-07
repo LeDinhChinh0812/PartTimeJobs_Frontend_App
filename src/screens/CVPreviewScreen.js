@@ -1,6 +1,6 @@
 /**
- * CVPreviewScreen
- * Displays user profile as a professional CV document
+ * Màn hình Xem trước CV
+ * Hiển thị hồ sơ người dùng dưới dạng tài liệu CV chuyên nghiệp
  */
 
 import React, { useRef } from 'react';
@@ -31,7 +31,7 @@ const CVPreviewScreen = () => {
     const route = useRoute();
     const { user } = useAuth();
 
-    // Initial profile from params, but we will fetch fresh one
+    // Hồ sơ ban đầu từ params, nhưng sẽ tải mới lại
     const [profile, setProfile] = React.useState(route.params?.profile || null);
     const [experience, setExperience] = React.useState([]);
     const [loading, setLoading] = React.useState(false);
@@ -40,7 +40,7 @@ const CVPreviewScreen = () => {
         if (user?.userId) {
             loadData();
         } else {
-            // If user is not ready, we might want to wait or try loading API profile anyway if we have a token
+            // Nếu user chưa sẵn sàng, có thể đợi hoặc thử tải API profile nếu có token
             loadData();
         }
     }, [user]);
@@ -48,13 +48,13 @@ const CVPreviewScreen = () => {
     const loadData = async () => {
         setLoading(true);
         try {
-            // 1. Fetch fresh profile from API
+            // 1. Tải hồ sơ mới nhất từ API
             const profileRes = await getMyProfile();
             if (profileRes.success && profileRes.data) {
                 setProfile(profileRes.data);
             }
 
-            // 2. Fetch local experience
+            // 2. Tải kinh nghiệm làm việc cục bộ
             if (user?.userId) {
                 const jsonValue = await AsyncStorage.getItem(`user_cv_${user.userId}`);
                 console.log('CVPreview - Loaded local data for user', user.userId, jsonValue); // Debug log
@@ -110,7 +110,7 @@ const CVPreviewScreen = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            {/* Header Toolbar */}
+            {/* Thanh công cụ tiêu đề */}
             <View style={styles.toolbar}>
                 <TouchableOpacity
                     onPress={() => navigation.goBack()}
@@ -129,9 +129,9 @@ const CVPreviewScreen = () => {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* CV Document (A4 Ratio) */}
+                {/* Tài liệu CV (Tỷ lệ A4) */}
                 <View style={styles.document}>
-                    {/* CV Header */}
+                    {/* Tiêu đề CV */}
                     <View style={styles.cvHeader}>
                         <View style={styles.nameSection}>
                             <Text style={styles.fullName}>{profile.fullName}</Text>
@@ -148,7 +148,7 @@ const CVPreviewScreen = () => {
 
                     <View style={styles.divider} />
 
-                    {/* Summary/Bio */}
+                    {/* Tóm tắt/Tiểu sử */}
                     {profile.bio && (
                         <View style={styles.cvSection}>
                             <Text style={styles.cvSectionTitle}>GIỚI THIỆU</Text>
@@ -156,7 +156,7 @@ const CVPreviewScreen = () => {
                         </View>
                     )}
 
-                    {/* Education */}
+                    {/* Học vấn */}
                     <View style={styles.cvSection}>
                         <Text style={styles.cvSectionTitle}>HỌC VẤN</Text>
                         <View style={styles.educationItem}>
@@ -171,7 +171,7 @@ const CVPreviewScreen = () => {
                         </View>
                     </View>
 
-                    {/* Experience (New) */}
+                    {/* Kinh nghiệm làm việc (Mới) */}
                     {experience.length > 0 && (
                         <View style={styles.cvSection}>
                             <Text style={styles.cvSectionTitle}>KINH NGHIỆM LÀM VIỆC</Text>
@@ -188,7 +188,7 @@ const CVPreviewScreen = () => {
                         </View>
                     )}
 
-                    {/* Skills */}
+                    {/* Kỹ năng */}
                     {profile.skills && profile.skills.length > 0 && (
                         <View style={styles.cvSection}>
                             <Text style={styles.cvSectionTitle}>KỸ NĂNG</Text>
@@ -202,7 +202,7 @@ const CVPreviewScreen = () => {
                         </View>
                     )}
 
-                    {/* Footer / Watermark */}
+                    {/* Chân trang / Watermark */}
                     <View style={styles.watermark}>
                         <Text style={styles.watermarkText}>Created with Job Finder App</Text>
                     </View>

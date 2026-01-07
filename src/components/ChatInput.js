@@ -11,8 +11,8 @@ import { Ionicons } from '@expo/vector-icons';
 import { COLORS, FONT_SIZES, SPACING } from '../constants';
 
 /**
- * Chat Input Component
- * Reusable input component for chat interfaces
+ * Component ChatInput
+ * Component nhập liệu tái sử dụng cho giao diện chat
  */
 const ChatInput = ({
     value,

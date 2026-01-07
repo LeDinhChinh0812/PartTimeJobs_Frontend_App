@@ -1,10 +1,10 @@
 /**
- * Validation Utilities
- * Migrated from js/utils.js
+ * Tiện ích kiểm tra hợp lệ
+ * Chuyển đổi từ js/utils.js
  */
 
 /**
- * Validate email format
+ * Kiểm tra định dạng email
  * @param {string} email - Email to validate
  * @returns {boolean} True if valid
  */
@@ -14,7 +14,7 @@ export const isValidEmail = (email) => {
 };
 
 /**
- * Validate password (minimum 6 characters)
+ * Kiểm tra mật khẩu (tối thiểu 6 ký tự)
  * @param {string} password - Password to validate
  * @returns {boolean} True if valid
  */
@@ -23,7 +23,7 @@ export const isValidPassword = (password) => {
 };
 
 /**
- * Validate form before submission
+ * Kiểm tra form trước khi gửi
  * @param {object} formData - Form data to validate
  * @param {string} formType - Type of form ('login' or 'signup')
  * @returns {object} { isValid: boolean, errors: object }
@@ -50,14 +50,14 @@ export const validateForm = (formData, formType) => {
         isValid = false;
     }
 
-    // Signup-specific validation
+    // Kiểm tra riêng cho đăng ký
     if (formType === 'signup') {
         if (!formData.fullName) {
             errors.fullName = 'Full name is required';
             isValid = false;
         }
 
-        // Confirm password validation
+        // Kiểm tra xác nhận mật khẩu
         if (formData.password !== formData.confirmPassword) {
             errors.password = 'Passwords do not match';
             isValid = false;

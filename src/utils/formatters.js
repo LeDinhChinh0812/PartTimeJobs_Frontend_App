@@ -1,10 +1,10 @@
 /**
- * Formatter Utilities
- * Helper functions for formatting data
+ * Tiện ích định dạng
+ * Các hàm hỗ trợ định dạng dữ liệu
  */
 
 /**
- * Format salary range
+ * Định dạng mức lương
  * @param {number} min - Minimum salary
  * @param {number} max - Maximum salary
  * @param {string} period - Salary period (Monthly, Hourly, etc.)
@@ -37,7 +37,7 @@ export const formatSalary = (min, max, period = 'Monthly') => {
 };
 
 /**
- * Format date to Vietnamese format
+ * Định dạng ngày theo chuẩn Việt Nam
  * @param {string|Date} date - Date to format
  * @returns {string} Formatted date string
  */
@@ -53,7 +53,7 @@ export const formatDate = (date) => {
 };
 
 /**
- * Format relative time (e.g., "2 ngày trước")
+ * Định dạng thời gian tương đối (VD: "2 ngày trước")
  * @param {string|Date} date - Date to format
  * @returns {string} Relative time string
  */
@@ -91,7 +91,7 @@ export const formatRelativeTime = (date) => {
 };
 
 /**
- * Truncate text to a maximum length
+ * Cắt ngắn văn bản theo độ dài tối đa
  * @param {string} text - Text to truncate
  * @param {number} maxLength - Maximum length
  * @returns {string} Truncated text
@@ -103,7 +103,7 @@ export const truncateText = (text, maxLength = 100) => {
 };
 
 /**
- * Format time range
+ * Định dạng khoảng thời gian
  * @param {string} startTime - Start time (HH:mm)
  * @param {string} endTime - End time (HH:mm)
  * @returns {string} Formatted time range
@@ -114,7 +114,7 @@ export const formatTimeRange = (startTime, endTime) => {
 };
 
 /**
- * Format days of week
+ * Định dạng các ngày trong tuần
  * @param {Array<string>} days - Array of day names
  * @returns {string} Formatted days string
  */

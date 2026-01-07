@@ -1,7 +1,7 @@
 import { apiClient } from './api.service';
 
 /**
- * Upload a file to the server
+ * Tải tập tin lên server
  * @param {object} file - File object (uri, name, type)
  * @returns {Promise<object>} Response containing file URL or ID
  */
@@ -9,7 +9,7 @@ export const uploadFile = async (file) => {
     try {
         const formData = new FormData();
 
-        // Handling file for React Native FormData
+        // Xử lý tập tin cho React Native FormData
         const fileToUpload = {
             uri: file.uri,
             name: file.name,
@@ -23,7 +23,7 @@ export const uploadFile = async (file) => {
                 // 'Content-Type': 'multipart/form-data', // Do not set manually, let axios/browser set it with boundary
             },
             transformRequest: (data, headers) => {
-                // Axios on React Native needs this to not mess up FormData
+                // Axios trên React Native cần cái này để không làm hỏng FormData
                 // Return data as is, don't let axios stringify it
                 return data;
             },

@@ -17,8 +17,8 @@ import { chatbotAPI } from '../services';
 import { COLORS, FONT_SIZES, SPACING } from '../constants';
 
 /**
- * AI Chatbot Screen
- * Conversational AI assistant for job-related queries
+ * Màn hình Chatbot AI
+ * Trợ lý AI đàm thoại cho các câu hỏi liên quan đến việc làm
  */
 const AIChatbotScreen = ({ navigation }) => {
     const [messages, setMessages] = useState([
@@ -41,7 +41,7 @@ const AIChatbotScreen = ({ navigation }) => {
 
     const flatListRef = useRef(null);
 
-    // Set navigation header
+    // Thiết lập tiêu đề điều hướng
     useEffect(() => {
         navigation.setOptions({
             headerTitle: () => (
@@ -66,7 +66,7 @@ const AIChatbotScreen = ({ navigation }) => {
         });
     }, [navigation]);
 
-    // Send message to AI
+    // Gửi tin nhắn đến AI
     const sendMessage = useCallback(
         async (messageText) => {
             const trimmedText = messageText || inputText.trim();
@@ -80,11 +80,11 @@ const AIChatbotScreen = ({ navigation }) => {
                 created_at: new Date().toISOString(),
             };
 
-            // Add user message
+            // Thêm tin nhắn người dùng
             setMessages((prev) => [...prev, userMessage]);
             setInputText('');
 
-            // Update conversation history
+            // Cập nhật lịch sử trò chuyện
             const newHistory = [
                 ...conversationHistory,
                 { role: 'user', content: trimmedText },
@@ -92,7 +92,7 @@ const AIChatbotScreen = ({ navigation }) => {
             setConversationHistory(newHistory);
 
             try {
-                // Get AI response
+                // Lấy phản hồi từ AI
                 const response = await chatbotAPI.sendMessage(trimmedText);
 
                 const botMessage = {
@@ -105,13 +105,13 @@ const AIChatbotScreen = ({ navigation }) => {
 
                 setMessages((prev) => [...prev, botMessage]);
 
-                // Update conversation history with bot response
+                // Cập nhật lịch sử trò chuyện với phản hồi của bot
                 setConversationHistory([
                     ...newHistory,
                     { role: 'assistant', content: botMessage.message },
                 ]);
 
-                // Scroll to bottom
+                // Cuộn xuống dưới cùng
                 setTimeout(() => {
                     flatListRef.current?.scrollToEnd({ animated: true });
                 }, 100);
@@ -147,7 +147,7 @@ const AIChatbotScreen = ({ navigation }) => {
         [inputText, loading, conversationHistory]
     );
 
-    // Clear conversation history
+    // Xóa lịch sử trò chuyện
     const handleClearHistory = useCallback(() => {
         Alert.alert(
             'Xóa lịch sử',
@@ -179,13 +179,13 @@ const AIChatbotScreen = ({ navigation }) => {
         );
     }, []);
 
-    // Handle suggested question
+    // Xử lý câu hỏi gợi ý
     const handleSuggestedQuestion = useCallback((question) => {
         setInputText(question);
         sendMessage(question);
     }, [sendMessage]);
 
-    // Format timestamp
+    // Định dạng thời gian
     const formatMessageTime = (timestamp) => {
         const date = new Date(timestamp);
         return date.toLocaleTimeString('vi-VN', {
@@ -194,7 +194,7 @@ const AIChatbotScreen = ({ navigation }) => {
         });
     };
 
-    // Render message item
+    // Render mục tin nhắn
     const renderMessageItem = ({ item }) => {
         const isUser = item.sender === 'user';
 
@@ -254,7 +254,7 @@ const AIChatbotScreen = ({ navigation }) => {
         );
     };
 
-    // Render suggested questions
+    // Render các câu hỏi gợi ý
     const renderSuggestedQuestions = () => {
         if (messages.length > 1) return null;
 
@@ -289,7 +289,7 @@ const AIChatbotScreen = ({ navigation }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
-            {/* Messages List */}
+            {/* Danh sách tin nhắn */}
             <FlatList
                 ref={flatListRef}
                 data={messages}
@@ -299,7 +299,7 @@ const AIChatbotScreen = ({ navigation }) => {
                 ListHeaderComponent={renderSuggestedQuestions}
             />
 
-            {/* Typing Indicator */}
+            {/* Chỉ báo đang nhập */}
             {loading && (
                 <View style={styles.typingIndicator}>
                     <View style={styles.botIconContainer}>
@@ -315,7 +315,7 @@ const AIChatbotScreen = ({ navigation }) => {
                 </View>
             )}
 
-            {/* Input Area */}
+            {/* Khu vực nhập liệu */}
             <View style={styles.inputContainer}>
                 <TextInput
                     style={styles.textInput}

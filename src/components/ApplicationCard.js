@@ -1,6 +1,6 @@
 /**
- * ApplicationCard Component
- * Displays application information in a card
+ * Component ApplicationCard
+ * Hiển thị thông tin đơn ứng tuyển trong thẻ
  */
 
 import React from 'react';
@@ -23,7 +23,7 @@ const ApplicationCard = ({
     showDelete = false,
     showReapply = false
 }) => {
-    // Determine status from ID if available, otherwise fallback to name
+    // Xác định trạng thái từ ID nếu có, nếu không thì dùng tên
     const statusKey = application.statusId && STATUS_MAPPING[application.statusId]
         ? STATUS_MAPPING[application.statusId]
         : application.statusName;

@@ -1,14 +1,14 @@
 /**
- * API Service
- * Handles all HTTP requests to the backend
- * Migrated from js/api.js
+ * Dịch vụ API
+ * Xử lý tất cả các yêu cầu HTTP đến backend
+ * Chuyển đổi từ js/api.js
  */
 
 import axios from 'axios';
 import { getAccessToken, getRefreshToken, saveTokens, clearAuthData } from './storage.service';
 import { API_BASE_URL } from '../config';
 
-// Configuration
+// Cấu hình
 
 const API_ENDPOINTS = {
     LOGIN: '/api/auth/login',
@@ -17,7 +17,7 @@ const API_ENDPOINTS = {
     REVOKE: '/api/auth/revoke',
 };
 
-// Create axios instance
+// Tạo instance axios
 const apiClient = axios.create({
     baseURL: API_BASE_URL,
     headers: {
@@ -26,10 +26,10 @@ const apiClient = axios.create({
     timeout: 10000,
 });
 
-// Export apiClient for use in other services
+// Xuất apiClient để sử dụng ở các dịch vụ khác
 export { apiClient };
 
-// Request interceptor - Add auth token to requests
+// Request interceptor - Thêm token xác thực vào yêu cầu
 apiClient.interceptors.request.use(
     async (config) => {
         const token = await getAccessToken();
@@ -43,7 +43,7 @@ apiClient.interceptors.request.use(
     }
 );
 
-// Response interceptor - Handle errors
+// Response interceptor - Xử lý lỗi
 apiClient.interceptors.response.use(
     (response) => {
         return response.data;
@@ -51,24 +51,24 @@ apiClient.interceptors.response.use(
     async (error) => {
         const originalRequest = error.config;
 
-        // If error is 401 and we haven't retried yet, try to refresh token
+        // Nếu lỗi 401 và chưa thử lại, thử refresh token
         if (error.response?.status === 401 && !originalRequest._retry) {
             originalRequest._retry = true;
 
             try {
-                // Attempt token refresh
+                // Thử làm mới refresh token
                 const refreshResponse = await refreshToken();
 
-                // Get the new token (refreshToken function returns the data object)
+                // Lấy token mới (hàm refreshToken trả về object data)
                 const newToken = refreshResponse.data.accessToken;
 
-                // Update auth header for the original request
+                // Cập nhật header auth cho request gốc
                 originalRequest.headers.Authorization = `Bearer ${newToken}`;
 
-                // Retry original request
+                // Thử lại request gốc
                 return apiClient(originalRequest);
             } catch (refreshError) {
-                // If refresh fails, clear auth and reject
+                // Nếu làm mới thất bại, xóa dữ liệu auth và từ chối
                 await clearAuthData();
                 return Promise.reject(refreshError);
             }
@@ -101,10 +101,10 @@ apiClient.interceptors.response.use(
 );
 
 /**
- * Login user
- * @param {string} email - User email
- * @param {string} password - User password
- * @returns {Promise<object>} Login response
+ * Đăng nhập người dùng
+ * @param {string} email - Email người dùng
+ * @param {string} password - Mật khẩu
+ * @returns {Promise<object>} Phản hồi đăng nhập
  */
 export const login = async (email, password) => {
     try {
@@ -125,13 +125,13 @@ export const login = async (email, password) => {
 };
 
 /**
- * Register new user
- * @param {string} fullName - User's full name
- * @param {string} email - User email
- * @param {string} password - User password
- * @param {string} confirmPassword - Password confirmation
- * @param {string} phoneNumber - Optional phone number
- * @returns {Promise<object>} Registration response
+ * Đăng ký người dùng mới
+ * @param {string} fullName - Tên đầy đủ
+ * @param {string} email - Email người dùng
+ * @param {string} password - Mật khẩu
+ * @param {string} confirmPassword - Xác nhận mật khẩu
+ * @param {string} phoneNumber - Số điện thoại (tùy chọn)
+ * @returns {Promise<object>} Phản hồi đăng ký
  */
 export const register = async (
     fullName,
@@ -160,8 +160,8 @@ export const register = async (
 };
 
 /**
- * Refresh access token
- * @returns {Promise<object>} Refresh response
+ * Làm mới access token
+ * @returns {Promise<object>} Phản hồi làm mới
  */
 export const refreshToken = async () => {
     try {
@@ -191,8 +191,8 @@ export const refreshToken = async () => {
 };
 
 /**
- * Logout user (revoke refresh token)
- * @returns {Promise<object>} Logout response
+ * Đăng xuất người dùng (thu hồi refresh token)
+ * @returns {Promise<object>} Phản hồi đăng xuất
  */
 export const logout = async () => {
     try {

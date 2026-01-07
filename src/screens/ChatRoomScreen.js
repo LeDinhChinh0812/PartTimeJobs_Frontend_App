@@ -18,7 +18,7 @@ import { COLORS, FONT_SIZES, SPACING } from '../constants';
 import { useAuth } from '../context';
 
 /**
- * Normalizes message object to handle inconsistent API/SignalR keys
+ * Chuẩn hóa tin nhắn để xử lý các khóa API/SignalR không nhất quán
  */
 const normalizeMessage = (msg) => {
     if (!msg) return null;
@@ -46,15 +46,15 @@ const normalizeMessage = (msg) => {
 
 
 /**
- * Chat Room Screen
- * Individual chat conversation interface
+ * Màn hình phòng chat
+ * Giao diện cuộc trò chuyện cá nhân
  */
 const ChatRoomScreen = ({ route, navigation }) => {
     const { user } = useAuth();
     const currentUserId = user?.userId;
     const { conversationId, participantName, participantAvatar, jobPostId: initialJobPostId, jobTitle: initialJobTitle } = route.params;
 
-    // Use jobPostId from params if available
+    // Sử dụng jobPostId từ tham số nếu có
     const [jobId, setJobId] = useState(initialJobPostId);
     const [jobTitle, setJobTitle] = useState(initialJobTitle);
     const [application, setApplication] = useState(null);
@@ -73,7 +73,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
     const flatListRef = useRef(null);
     const typingTimeoutRef = useRef(null);
 
-    // Fetch Job and Application details if jobId exists
+    // Tải chi tiết công việc và đơn ứng tuyển nếu có jobId
     useEffect(() => {
         const fetchJobAndApp = async () => {
             if (!jobId) return;
@@ -82,7 +82,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
                 setLoadingJobDetail(true);
                 const { getJobById, getMyApplications } = await import('../services');
 
-                // Fetch job to get title if not provided
+                // Tải thông tin công việc để lấy tiêu đề nếu chưa được cung cấp
                 if (!jobTitle && jobId) {
                     try {
                         const jobRes = await getJobById(jobId);
@@ -94,7 +94,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
                     }
                 }
 
-                // Fetch application status
+                // Tải trạng thái đơn ứng tuyển
                 if (jobId) {
                     try {
                         const appRes = await getMyApplications(1, 100);
@@ -109,7 +109,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
                     }
                 }
             } catch (err) {
-                // Silently log major errors to avoid breaking the chat
+                // Ghi log lỗi lớn một cách âm thầm để tránh làm hỏng chat
                 console.log('Silent: Error in fetchJobAndApp sequence');
             } finally {
                 setLoadingJobDetail(false);
@@ -138,7 +138,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
 
                             if (response.success) {
                                 Alert.alert('Thành công', 'Đã rút đơn ứng tuyển');
-                                // Update local application status
+                                // Cập nhật trạng thái đơn ứng tuyển cục bộ
                                 setApplication(prev => ({ ...prev, statusName: 'Withdrawn' }));
                             } else {
                                 Alert.alert('Lỗi', response.message || 'Không thể rút đơn');
@@ -155,7 +155,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
         );
     };
 
-    // Load messages
+    // Tải tin nhắn
     const loadMessages = useCallback(async (pageNum = 1, append = false) => {
         try {
             const data = await chatAPI.getMessages(conversationId, pageNum, 50);
@@ -180,18 +180,18 @@ const ChatRoomScreen = ({ route, navigation }) => {
 
     useEffect(() => {
         loadMessages();
-        // Mark messages as read
+        // Đánh dấu tin nhắn đã đọc
         chatAPI.markAsRead(conversationId).catch(console.error);
     }, [conversationId, loadMessages]);
 
-    // Setup SignalR connection
+    // Thiết lập kết nối SignalR
     useEffect(() => {
         let unsubscribeMessage;
         let unsubscribeConnectionState;
         let unsubscribeTyping;
 
         const setupSignalR = async () => {
-            // Subscribe to new messages first to avoid race conditions
+            // Đăng ký nhận tin nhắn mới trước để tránh race conditions
             unsubscribeMessage = signalRService.onMessage((rawMessage) => {
                 console.log('ChatRoom: Raw SignalR message:', rawMessage);
                 const message = normalizeMessage(rawMessage);
@@ -205,11 +205,11 @@ const ChatRoomScreen = ({ route, navigation }) => {
                     match_int: message.conversationId === parseInt(conversationId)
                 });
 
-                // Add message if it's for this conversation
+                // Thêm tin nhắn nếu thuộc cuộc trò chuyện này
                 // compare loosely to handle string/number differences
                 if (message.conversationId == conversationId) {
                     setMessages((prev) => {
-                        // Check if message already exists
+                        // Kiểm tra xem tin nhắn đã tồn tại chưa
                         const exists = prev.some(m => m.id && message.id && m.id === message.id);
                         if (exists) {
                             console.log('ChatRoom: Message already exists, skipping:', message.id);
@@ -218,7 +218,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
 
                         console.log('ChatRoom: Adding new message to list:', message);
 
-                        // Ensure message has an ID to prevent key errors
+                        // Đảm bảo tin nhắn có ID để tránh lỗi key
                         if (!message.id) {
                             message.id = `signalr-${Date.now()}-${Math.random()}`;
                         }
@@ -226,7 +226,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
                         return [...prev, message];
                     });
 
-                    // Scroll to bottom
+                    // Cuộn xuống dưới cùng
                     setTimeout(() => {
                         flatListRef.current?.scrollToEnd({ animated: true });
                     }, 100);
@@ -235,9 +235,9 @@ const ChatRoomScreen = ({ route, navigation }) => {
                 }
             });
 
-            // Subscribe to typing events
+            // Đăng ký sự kiện đang nhập (typing)
             unsubscribeTyping = signalRService.onTyping(({ userId, isTyping }) => {
-                // Check if it's the other person typing (not us)
+                // Kiểm tra xem có phải người khác đang nhập không (không phải chúng ta)
                 if (parseInt(userId) !== parseInt(currentUserId)) {
                     if (isTyping) {
                         setTypingText(`${participantName || 'Người khác'} đang nhập...`);
@@ -247,18 +247,18 @@ const ChatRoomScreen = ({ route, navigation }) => {
                 }
             });
 
-            // Subscribe to connection state changes
+            // Đăng ký thay đổi trạng thái kết nối
             unsubscribeConnectionState = signalRService.onConnectionStateChange((state) => {
                 console.log('SignalR connection state:', state);
                 setIsConnected(state === 'connected');
             });
 
             try {
-                // Connect to SignalR
+                // Kết nối với SignalR
                 await signalRService.connect();
                 setIsConnected(true);
 
-                // Join conversation room
+                // Tham gia phòng chat
                 await signalRService.joinConversation(conversationId);
 
             } catch (error) {
@@ -269,18 +269,18 @@ const ChatRoomScreen = ({ route, navigation }) => {
 
         setupSignalR();
 
-        // Cleanup on unmount
+        // Dọn dẹp khi unmount
         return () => {
             if (unsubscribeMessage) unsubscribeMessage();
             if (unsubscribeTyping) unsubscribeTyping();
             if (unsubscribeConnectionState) unsubscribeConnectionState();
 
-            // Leave conversation
+            // Rời khỏi cuộc trò chuyện
             signalRService.leaveConversation(conversationId).catch(console.error);
         };
     }, [conversationId]);
 
-    // Set navigation header
+    // Thiết lập tiêu đề điều hướng
     useEffect(() => {
         navigation.setOptions({
             headerTitle: () => (
@@ -303,12 +303,12 @@ const ChatRoomScreen = ({ route, navigation }) => {
         });
     }, [navigation, participantName, participantAvatar]);
 
-    // Send message
+    // Gửi tin nhắn
     const sendMessage = useCallback(async () => {
         const trimmedText = inputText.trim();
         if (!trimmedText || sending) return;
 
-        // Ensure we have a valid conversationId
+        // Đảm bảo có conversationId hợp lệ
         if (!conversationId) {
             Alert.alert('Lỗi', 'Không tìm thấy cuộc trò chuyện');
             return;
@@ -326,31 +326,31 @@ const ChatRoomScreen = ({ route, navigation }) => {
             is_sending: true,
         };
 
-        // Optimistically add message
+        // Thêm tin nhắn một cách lạc quan (Optimistic update)
         setMessages((prev) => [...prev, tempMessage]);
         setInputText('');
 
         try {
-            // Always use REST API for sending to avoid SignalR invocation issues
+            // Luôn sử dụng REST API để gửi nhằm tránh các vấn đề gọi SignalR
             const response = await chatAPI.sendMessage(conversationId, trimmedText);
             console.log('Message sent via REST API:', response);
             const normalizedRes = normalizeMessage(response);
 
-            // Replace temp message with real message
+            // Thay thế tin nhắn tạm thời bằng tin nhắn thực
             setMessages((prev) =>
                 prev.map((msg) =>
                     msg.id === tempId ? { ...normalizedRes, is_sending: false } : msg
                 )
             );
 
-            // Scroll to bottom
+            // Cuộn xuống dưới cùng
             setTimeout(() => {
                 flatListRef.current?.scrollToEnd({ animated: true });
             }, 100);
         } catch (error) {
             console.error('Error sending message via REST:', error);
 
-            // Remove temp message and show error
+            // Xóa tin nhắn tạm thời và hiển thị lỗi
             setMessages((prev) => prev.filter((msg) => msg.id !== tempId));
             Alert.alert('Lỗi', 'Không thể gửi tin nhắn. Vui lòng thử lại.');
             setInputText(trimmedText);
@@ -359,27 +359,27 @@ const ChatRoomScreen = ({ route, navigation }) => {
         }
     }, [inputText, conversationId, sending]);
 
-    // Handle typing indicator
+    // Xử lý chỉ báo đang nhập
     const handleTextChange = useCallback((text) => {
         setInputText(text);
 
         if (isConnected) {
-            // Clear previous timeout
+            // Xóa timeout trước đó
             if (typingTimeoutRef.current) {
                 clearTimeout(typingTimeoutRef.current);
             }
 
-            // Send typing indicator
+            // Gửi chỉ báo đang nhập
             signalRService.sendTypingIndicator(conversationId, true);
 
-            // Stop typing after 2 seconds of no input
+            // Ngừng trạng thái đang nhập sau 2 giây không nhập liệu
             typingTimeoutRef.current = setTimeout(() => {
                 signalRService.sendTypingIndicator(conversationId, false);
             }, 2000);
         }
     }, [conversationId, isConnected]);
 
-    // Load more messages
+    // Tải thêm tin nhắn
     const loadMoreMessages = useCallback(() => {
         if (!loading && hasMore) {
             setLoading(true);
@@ -387,7 +387,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
         }
     }, [loading, hasMore, page, loadMessages]);
 
-    // Format message timestamp
+    // Định dạng thời gian tin nhắn
     const formatMessageTime = (timestamp) => {
         if (!timestamp) return '';
         const date = new Date(timestamp);
@@ -399,9 +399,9 @@ const ChatRoomScreen = ({ route, navigation }) => {
         });
     };
 
-    // Render message item
+    // Render mục tin nhắn
     const renderMessageItem = ({ item, index }) => {
-        // Compare with current user ID from auth context
+        // So sánh với ID người dùng hiện tại từ context xác thực
         const isCurrentUser = item.senderId === currentUserId || item.sender_id === currentUserId || item.sender_id === 'current_user';
 
         const itemDate = new Date(item.created_at);
@@ -488,7 +488,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
             behavior={Platform.OS === 'ios' ? 'padding' : undefined}
             keyboardVerticalOffset={Platform.OS === 'ios' ? 90 : 0}
         >
-            {/* Job Info Bar */}
+            {/* Thanh thông tin công việc */}
             {jobId && jobTitle && (
                 <View style={styles.jobInfoBar}>
                     <View style={styles.jobInfoMain}>
@@ -516,7 +516,7 @@ const ChatRoomScreen = ({ route, navigation }) => {
                 </View>
             )}
 
-            {/* Messages List */}
+            {/* Danh sách tin nhắn */}
             <FlatList
                 ref={flatListRef}
                 data={messages}
@@ -540,14 +540,14 @@ const ChatRoomScreen = ({ route, navigation }) => {
                 }
             />
 
-            {/* Typing Indicator */}
+            {/* Chỉ báo đang nhập */}
             {typingText ? (
                 <View style={styles.typingContainer}>
                     <Text style={styles.typingText}>{typingText}</Text>
                 </View>
             ) : null}
 
-            {/* Input Area */}
+            {/* Khu vực nhập liệu */}
             <View style={styles.inputContainer}>
                 <TouchableOpacity style={styles.attachButton}>
                     <Ionicons name="add-circle-outline" size={28} color={COLORS.primary} />

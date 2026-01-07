@@ -1,6 +1,6 @@
 /**
- * JobDetailScreen Component
- * Detailed job information with apply functionality
+ * Component Chi tiết việc làm
+ * Thông tin chi tiết công việc với chức năng ứng tuyển
  */
 
 import React, { useState, useEffect } from 'react';
@@ -17,15 +17,15 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { useRoute, useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { Button, EmptyState } from '../components';
-import { getJobById, getMyApplications, chatAPI, withdrawApplication } from '../services'; // Added chatAPI, withdrawApplication
+import { getJobById, getMyApplications, chatAPI, withdrawApplication } from '../services'; // Đã thêm chatAPI, withdrawApplication
 import { formatSalary, formatDate, formatTimeRange, formatDaysOfWeek } from '../utils/formatters';
-import { useAuth } from '../context'; // Added useAuth
+import { useAuth } from '../context'; // Đã thêm useAuth
 import { COLORS, TYPOGRAPHY, SPACING } from '../constants';
 
 const JobDetailScreen = () => {
     const route = useRoute();
     const navigation = useNavigation();
-    const { user } = useAuth(); // Get current user
+    const { user } = useAuth(); // Lấy người dùng hiện tại
     const { jobId } = route.params;
 
     const [job, setJob] = useState(null);
@@ -33,8 +33,8 @@ const JobDetailScreen = () => {
     const [error, setError] = useState(null);
     const [hasApplied, setHasApplied] = useState(false);
     const [checkingApplication, setCheckingApplication] = useState(true);
-    const [chatLoading, setChatLoading] = useState(false); // New state for chat loading
-    const [appliedApplication, setAppliedApplication] = useState(null); // Store the actual application object
+    const [chatLoading, setChatLoading] = useState(false); // State mới cho loading chat
+    const [appliedApplication, setAppliedApplication] = useState(null); // Lưu đối tượng đơn ứng tuyển thực tế
     const [withdrawing, setWithdrawing] = useState(false);
 
     useEffect(() => {
@@ -62,12 +62,12 @@ const JobDetailScreen = () => {
     const checkIfApplied = async () => {
         try {
             setCheckingApplication(true);
-            const response = await getMyApplications(1, 100); // Get all applications
+            const response = await getMyApplications(1, 100); // Lấy tất cả đơn ứng tuyển
 
             if (response.success && response.data) {
                 const application = response.data.items?.find(app => app.jobPostId === jobId);
 
-                // Consistency fix: A withdrawn application should not count as "Applied"
+                // Sửa lỗi nhất quán: Đơn đã rút không nên tính là "Đã ứng tuyển"
                 const isWithdrawn = application?.statusName === 'Withdrawn' || application?.statusName === 'Đã rút';
 
                 setAppliedApplication(application || null);
@@ -100,7 +100,7 @@ const JobDetailScreen = () => {
         });
     };
 
-    // Chat Handler
+    // Xử lý Chat
     const handleChat = async () => {
         console.log('=== CHAT BUTTON CLICKED (JobDetail) ===');
         console.log('Job raw data:', JSON.stringify(job, null, 2));
@@ -121,8 +121,8 @@ const JobDetailScreen = () => {
         try {
             setChatLoading(true);
 
-            // Create or get conversation
-            // API requires int for IDs
+            // Tạo hoặc lấy cuộc trò chuyện
+            // API yêu cầu kiểu int cho ID
             const recipientId = parseInt(
                 job.employerId ||
                 job.recruiterId ||
@@ -159,7 +159,7 @@ const JobDetailScreen = () => {
         }
     };
 
-    // Withdrawal Handler
+    // Xử lý Rút đơn
     const handleWithdraw = async () => {
         if (!appliedApplication) return;
 
@@ -177,9 +177,9 @@ const JobDetailScreen = () => {
                             const response = await withdrawApplication(appliedApplication.id);
                             if (response.success) {
                                 Alert.alert('Thành công', 'Đã rút đơn ứng tuyển');
-                                // Refresh application state from server to ensure absolute consistency
+                                // Làm mới trạng thái ứng tuyển từ server để đảm bảo nhất quán tuyệt đối
                                 await checkIfApplied();
-                                // Refresh job detail to update counts if needed
+                                // Làm mới chi tiết công việc để cập nhật số lượng nếu cần
                                 fetchJobDetail();
                             } else {
                                 Alert.alert('Lỗi', response.message || 'Không thể rút đơn');
@@ -246,11 +246,11 @@ const JobDetailScreen = () => {
         );
     }
 
-    // DEMO FORCE: Always allow applying (bypass expiration check)
+    // DEMO FORCE: Luôn cho phép ứng tuyển (bỏ qua kiểm tra hết hạn)
     // const isExpired = job.applicationDeadline && new Date(job.applicationDeadline) < new Date();
     const isExpired = false;
 
-    // Debug Date Logic
+    // Debug Logic Ngày tháng
     if (job.applicationDeadline) {
         console.log('Date Debug:', {
             serverString: job.applicationDeadline,
@@ -262,7 +262,7 @@ const JobDetailScreen = () => {
 
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
-            {/* Header */}
+            {/* Tiêu đề */}
             <View style={styles.header}>
                 <TouchableOpacity
                     onPress={() => navigation.goBack()}
@@ -279,7 +279,7 @@ const JobDetailScreen = () => {
                 contentContainerStyle={styles.scrollContent}
                 showsVerticalScrollIndicator={false}
             >
-                {/* Job Header */}
+                {/* Header công việc */}
                 <View style={styles.jobHeader}>
                     <View style={styles.companyLogo}>
                         <Ionicons name="business" size={32} color={COLORS.accentOrange} />
@@ -295,7 +295,7 @@ const JobDetailScreen = () => {
                     )}
                 </View>
 
-                {/* Quick Info */}
+                {/* Thông tin nhanh */}
                 <View style={styles.quickInfo}>
                     {renderInfoRow(
                         'cash-outline',
@@ -317,16 +317,16 @@ const JobDetailScreen = () => {
                     )}
                 </View>
 
-                {/* Description */}
+                {/* Mô tả */}
                 {renderSection('Mô tả công việc', job.description)}
 
-                {/* Requirements */}
+                {/* Yêu cầu */}
                 {renderSection('Yêu cầu', job.requirements)}
 
-                {/* Benefits */}
+                {/* Quyền lợi */}
                 {renderSection('Quyền lợi', job.benefits)}
 
-                {/* Skills */}
+                {/* Kỹ năng */}
                 {job.requiredSkills && job.requiredSkills.length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Kỹ năng yêu cầu</Text>
@@ -340,7 +340,7 @@ const JobDetailScreen = () => {
                     </View>
                 )}
 
-                {/* Shifts */}
+                {/* Ca làm việc */}
                 {job.shifts && job.shifts.length > 0 && (
                     <View style={styles.section}>
                         <Text style={styles.sectionTitle}>Ca làm việc</Text>
@@ -360,7 +360,7 @@ const JobDetailScreen = () => {
                     </View>
                 )}
 
-                {/* Stats */}
+                {/* Thống kê */}
                 <View style={styles.statsContainer}>
                     <View style={styles.statItem}>
                         <Ionicons name="eye-outline" size={20} color={COLORS.textSecondary} />
@@ -375,9 +375,9 @@ const JobDetailScreen = () => {
                 <View style={{ height: 100 }} />
             </ScrollView>
 
-            {/* Bottom Actions */}
+            {/* Hành động phía dưới */}
             <View style={styles.bottomActions}>
-                {/* Chat Button */}
+                {/* Nút Chat */}
                 <TouchableOpacity
                     style={styles.chatButton}
                     onPress={handleChat}

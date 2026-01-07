@@ -1,6 +1,6 @@
 /**
- * EditProfileScreen
- * Screen for creating/updating user profile
+ * Màn hình Chỉnh sửa Hồ sơ
+ * Màn hình để tạo/cập nhật hồ sơ người dùng
  */
 
 import React, { useState } from 'react';
@@ -53,7 +53,7 @@ const EditProfileScreen = () => {
     };
 
     const handleSave = async () => {
-        // Basic validation
+        // Xác thực cơ bản
         if (!formData.firstName.trim() || !formData.lastName.trim()) {
             Alert.alert('Lỗi', 'Vui lòng nhập họ và tên');
             return;
@@ -62,7 +62,7 @@ const EditProfileScreen = () => {
         try {
             setLoading(true);
 
-            // Process skills
+            // Xử lý kỹ năng
             let skillsList = [];
             if (formData.skills.trim()) {
                 skillsList = formData.skills.split(',')
@@ -71,7 +71,7 @@ const EditProfileScreen = () => {
                     .map(s => ({ skillName: s }));
             }
 
-            // Prepare data
+            // Chuẩn bị dữ liệu
             const profileData = {
                 firstName: formData.firstName.trim(),
                 lastName: formData.lastName.trim(),
@@ -132,7 +132,7 @@ const EditProfileScreen = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
             >
-                {/* Header */}
+                {/* Tiêu đề */}
                 <View style={styles.header}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
@@ -151,7 +151,7 @@ const EditProfileScreen = () => {
                     contentContainerStyle={styles.content}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* Personal Information */}
+                    {/* Thông tin cá nhân */}
                     <Text style={styles.sectionTitle}>Thông tin cá nhân</Text>
                     {renderInput('Họ đệm', 'firstName', 'VD: Nguyễn Văn')}
                     {renderInput('Tên', 'lastName', 'VD: A')}
@@ -163,7 +163,7 @@ const EditProfileScreen = () => {
                         numberOfLines: 4,
                     })}
 
-                    {/* Other fields have been moved to Create CV Screen */}
+                    {/* Các trường khác đã được chuyển sang Màn hình Tạo CV */}
                     <View style={{ marginBottom: SPACING.md }}>
                         <Text style={{ fontStyle: 'italic', color: COLORS.textSecondary }}>
                             Để chỉnh sửa Học vấn, Kỹ năng và Link CV, vui lòng sử dụng tính năng "Tạo / Sửa CV" trong màn hình Hồ sơ.
@@ -178,7 +178,7 @@ const EditProfileScreen = () => {
                     </View>
                 </ScrollView>
 
-                {/* Save Button */}
+                {/* Nút Lưu */}
                 <View style={styles.footer}>
                     <Button
                         title={loading ? 'Đang lưu...' : 'Lưu hồ sơ'}

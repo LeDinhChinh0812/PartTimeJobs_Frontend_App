@@ -1,8 +1,8 @@
 import { apiClient } from './api.service';
 
 /**
- * AI Chatbot API Service
- * Handles AI chatbot interactions
+ * Dịch vụ API AI Chatbot
+ * Xử lý tương tác với AI chatbot
  */
 const chatbotAPI = {
     /**
@@ -23,7 +23,7 @@ const chatbotAPI = {
     },
 
     /**
-     * Restart chatbot conversation
+     * Khởi động lại cuộc trò chuyện chatbot
      */
     clearHistory: async () => {
         try {

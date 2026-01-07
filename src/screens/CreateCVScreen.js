@@ -29,11 +29,11 @@ const CreateCVScreen = () => {
     const [loading, setLoading] = useState(true);
     const [saving, setSaving] = useState(false);
 
-    // Editing State
-    const [editingSection, setEditingSection] = useState(null); // 'personal', 'education', 'experience', 'skills', etc.
-    const [tempData, setTempData] = useState({}); // To hold data while editing in modal
+    // Trạng thái chỉnh sửa
+    const [editingSection, setEditingSection] = useState(null); // 'personal', 'education', 'experience', 'skills', v.v.
+    const [tempData, setTempData] = useState({}); // Lưu dữ liệu tạm thời khi chỉnh sửa trong modal
 
-    // Full Profile Data
+    // Dữ liệu hồ sơ đầy đủ
     const initialCVState = {
         // Personal
         fullName: '',
@@ -45,11 +45,11 @@ const CreateCVScreen = () => {
         dateOfBirth: '',
         bio: '', // Mục tiêu nghề nghiệp
         // Education
-        educationList: [], // Changed to array for multiple education entries
+        educationList: [], // Đã chuyển thành mảng cho nhiều mục học vấn
         // Skills
         skills: '', // Kỹ năng chuyên môn
         interests: '', // Sở thích
-        // Experience (Local)
+        // Kinh nghiệm (Cục bộ)
         experience: [],
         // Certifications
         certifications: [], // Chứng chỉ
@@ -82,12 +82,12 @@ const CreateCVScreen = () => {
                     address: p.address || '',
                     dateOfBirth: p.dateOfBirth ? p.dateOfBirth.split('T')[0] : '',
                     bio: p.bio || '',
-                    jobTitle: p.major || '', // Use major as job title initially
+                    jobTitle: p.major || '', // Sử dụng chuyên ngành làm chức danh ban đầu
                     skills: p.skills ? p.skills.map(s => s.skillName).join(', ') : '',
                     resumeUrl: p.resumeUrl || '',
                 };
 
-                // Map education data
+                // Ánh xạ dữ liệu học vấn
                 if (p.university || p.major) {
                     data.educationList = [{
                         id: '1',
@@ -99,7 +99,7 @@ const CreateCVScreen = () => {
                 }
             }
 
-            // Local Data
+            // Dữ liệu cục bộ
             if (user?.userId) {
                 const jsonValue = await AsyncStorage.getItem(`user_cv_${user.userId}`);
                 if (jsonValue) {
@@ -129,13 +129,13 @@ const CreateCVScreen = () => {
             console.log('User ID:', user?.userId);
             console.log('Current CV Data (Experience):', JSON.stringify(cvData.experience));
 
-            // 1. Prepare Skills List
+            // 1. Chuẩn bị danh sách kỹ năng
             let skillsList = [];
             if (cvData.skills.trim()) {
                 skillsList = cvData.skills.split(',').map(s => ({ skillName: s.trim() }));
             }
 
-            // 2. Helper to format Date (DD/MM/YYYY -> YYYY-MM-DD)
+            // 2. Hàm hỗ trợ định dạng ngày (DD/MM/YYYY -> YYYY-MM-DD)
             const formatDateForApi = (dateString) => {
                 if (!dateString) return null;
                 // Regex for DD/MM/YYYY
@@ -146,7 +146,7 @@ const CreateCVScreen = () => {
                 return dateString;
             };
 
-            // 3. Construct Payload - Explicitly defined to ensure email/phone/name are strictly updated
+            // 3. Xây dựng Payload - Định nghĩa rõ ràng để đảm bảo email/sđt/tên được cập nhật đúng
             const updatePayload = {
                 fullName: cvData.fullName,
                 email: cvData.email,
@@ -155,12 +155,12 @@ const CreateCVScreen = () => {
                 bio: cvData.bio,
                 dateOfBirth: formatDateForApi(cvData.dateOfBirth),
                 skills: skillsList,
-                // Map first education entry to profile fields (safe access)
+                // Ánh xạ mục học vấn đầu tiên vào các trường hồ sơ (truy cập an toàn)
                 university: (cvData.educationList && cvData.educationList[0]) ? cvData.educationList[0].school || '' : '',
                 major: cvData.jobTitle || ((cvData.educationList && cvData.educationList[0]) ? cvData.educationList[0].major || '' : ''),
                 gpa: (cvData.educationList && cvData.educationList[0] && cvData.educationList[0].gpa) ? parseFloat(cvData.educationList[0].gpa) : null,
-                yearOfStudy: null, // Deprecated in new structure
-                resumeUrl: cvData.resumeUrl, // Preserve existing resumeUrl
+                yearOfStudy: null, // Đã lỗi thời trong cấu trúc mới
+                resumeUrl: cvData.resumeUrl, // Giữ nguyên resumeUrl hiện có
             };
 
             console.log('Sending Profile Update:', JSON.stringify(updatePayload));
@@ -172,7 +172,7 @@ const CreateCVScreen = () => {
             }
 
             // 2. Save Local Data
-            // 2. Save Local Data
+            // 2. Lưu dữ liệu cục bộ
             if (user?.userId) {
                 const localData = {
                     experience: cvData.experience || [],
@@ -186,7 +186,7 @@ const CreateCVScreen = () => {
                 console.log('Saving Local Data to AsyncStorage:', `user_cv_${user.userId}`, JSON.stringify(localData));
                 await AsyncStorage.setItem(`user_cv_${user.userId}`, JSON.stringify(localData));
 
-                // Verify immediate read back
+                // Xác minh đọc lại ngay lập tức
                 const check = await AsyncStorage.getItem(`user_cv_${user.userId}`);
                 console.log('Immediate Read Back Verification:', check);
             } else {
@@ -206,7 +206,7 @@ const CreateCVScreen = () => {
     };
 
     const openEdit = (section) => {
-        // Copy current data and ensure all arrays are initialized
+        // Sao chép dữ liệu hiện tại và đảm bảo tất cả mảng được khởi tạo
         const dataCopy = {
             ...cvData,
             experience: cvData.experience || [],
@@ -227,7 +227,7 @@ const CreateCVScreen = () => {
         setTempData(prev => ({ ...prev, [field]: value }));
     };
 
-    // Experience Helpers for Modal
+    // Các hàm hỗ trợ Kinh nghiệm cho Modal
     const updateTempExperience = (id, field, value) => {
         setTempData(prev => ({
             ...prev,
@@ -247,7 +247,7 @@ const CreateCVScreen = () => {
         }));
     };
 
-    // Education Helpers
+    // Các hàm hỗ trợ Học vấn
     const updateTempEducation = (id, field, value) => {
         setTempData(prev => ({
             ...prev,
@@ -267,7 +267,7 @@ const CreateCVScreen = () => {
         }));
     };
 
-    // Certification Helpers
+    // Các hàm hỗ trợ Chứng chỉ
     const updateTempCertification = (id, field, value) => {
         setTempData(prev => ({
             ...prev,
@@ -287,7 +287,7 @@ const CreateCVScreen = () => {
         }));
     };
 
-    // Award Helpers
+    // Các hàm hỗ trợ Giải thưởng
     const updateTempAward = (id, field, value) => {
         setTempData(prev => ({
             ...prev,
@@ -309,22 +309,22 @@ const CreateCVScreen = () => {
 
 
 
-    // --- Render Sections for Visual CV --- //
+    // --- Render các phần cho CV Trực quan --- //
 
-    // Use Orange Theme for visual consistency with the app
+    // Sử dụng Theme màu Cam để đồng nhất với ứng dụng
     const THEME_COLOR = COLORS.primary || '#FF5722';
     const THEME_DARK = '#E64A19';
     const LIGHT_TEXT = '#FFF';
 
     const renderLeftColumn = () => (
         <View style={[styles.leftColumn, { backgroundColor: THEME_COLOR }]}>
-            {/* Name & Job Title - NO AVATAR/PHOTO */}
+            {/* Tên & Chức danh - KHÔNG CÓ AVATAR/ẢNH */}
             <TouchableOpacity style={styles.nameSection} onPress={() => openEdit('personal')}>
                 <Text style={styles.cvName}>{cvData.fullName || 'Tên của bạn'}</Text>
                 <Text style={styles.cvPosition}>{cvData.jobTitle || 'Vị trí ứng tuyển'}</Text>
             </TouchableOpacity>
 
-            {/* Contact Info */}
+            {/* Thông tin liên hệ */}
             <TouchableOpacity style={styles.contactSection} onPress={() => openEdit('contact')}>
                 <View style={styles.contactRow}>
                     <Ionicons name="calendar" size={12} color={LIGHT_TEXT} />
@@ -348,7 +348,7 @@ const CreateCVScreen = () => {
                 </View>
             </TouchableOpacity>
 
-            {/* Education */}
+            {/* Học vấn */}
             <TouchableOpacity style={styles.leftSection} onPress={() => openEdit('education')}>
                 <View style={[styles.sectionHeaderLeft, { backgroundColor: THEME_DARK }]}>
                     <Text style={styles.sectionTitleLeft}>Học vấn</Text>
@@ -369,7 +369,7 @@ const CreateCVScreen = () => {
                 </View>
             </TouchableOpacity>
 
-            {/* Skills */}
+            {/* Kỹ năng */}
             <TouchableOpacity style={styles.leftSection} onPress={() => openEdit('skills')}>
                 <View style={[styles.sectionHeaderLeft, { backgroundColor: THEME_DARK }]}>
                     <Text style={styles.sectionTitleLeft}>Kỹ năng</Text>
@@ -381,7 +381,7 @@ const CreateCVScreen = () => {
                 </View>
             </TouchableOpacity>
 
-            {/* Interests */}
+            {/* Sở thích */}
             <TouchableOpacity style={styles.leftSection} onPress={() => openEdit('interests')}>
                 <View style={[styles.sectionHeaderLeft, { backgroundColor: THEME_DARK }]}>
                     <Text style={styles.sectionTitleLeft}>Sở thích</Text>
@@ -395,7 +395,7 @@ const CreateCVScreen = () => {
 
     const renderRightColumn = () => (
         <View style={styles.rightColumn}>
-            {/* Summary */}
+            {/* Tóm tắt */}
             <TouchableOpacity style={styles.rightSection} onPress={() => openEdit('bio')}>
                 <View style={styles.sectionHeaderRight}>
                     <Text style={[styles.sectionTitleRight, { backgroundColor: THEME_COLOR }]}>Mục tiêu nghề nghiệp</Text>
@@ -406,7 +406,7 @@ const CreateCVScreen = () => {
                 </Text>
             </TouchableOpacity>
 
-            {/* Experience */}
+            {/* Kinh nghiệm làm việc */}
             <TouchableOpacity style={styles.rightSection} onPress={() => openEdit('experience')}>
                 <View style={styles.sectionHeaderRight}>
                     <Text style={[styles.sectionTitleRight, { backgroundColor: THEME_COLOR }]}>Kinh nghiệm làm việc</Text>
@@ -428,7 +428,7 @@ const CreateCVScreen = () => {
                 )}
             </TouchableOpacity>
 
-            {/* Awards / Certs Placeholders */}
+            {/* Placeholder cho Giải thưởng / Chứng chỉ */}
             <TouchableOpacity style={styles.rightSection} onPress={() => openEdit('certifications')}>
                 <View style={styles.sectionHeaderRight}>
                     <Text style={[styles.sectionTitleRight, { backgroundColor: THEME_COLOR }]}>Chứng chỉ</Text>
@@ -469,12 +469,12 @@ const CreateCVScreen = () => {
     );
 
 
-    // --- EDIT MODALS --- //
+    // --- MODAL CHỈNH SỬA --- //
     const renderEditModal = () => {
         if (!editingSection) return null;
 
         const renderModalContent = () => {
-            const inputStyle = [styles.modalInput, { color: '#000' }]; // Ensure text is dark
+            const inputStyle = [styles.modalInput, { color: '#000' }]; // Đảm bảo văn bản màu tối
 
             switch (editingSection) {
                 case 'personal':
@@ -697,7 +697,7 @@ const CreateCVScreen = () => {
     return (
         <SafeAreaView style={styles.container} edges={['top']}>
 
-            {/* Top Navigation Bar */}
+            {/* Thanh điều hướng trên cùng */}
             <View style={styles.navBar}>
                 <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
                     <Ionicons name="arrow-back" size={24} color={COLORS.textPrimary} />
@@ -709,7 +709,7 @@ const CreateCVScreen = () => {
                 <View style={{ width: 24 }} />
             </View>
 
-            {/* Green Banner */}
+            {/* Banner màu xanh */}
             <View style={styles.banner}>
                 <Text style={styles.bannerText}>Chạm vào từng mục trong CV để sửa</Text>
                 <TouchableOpacity>
@@ -717,7 +717,7 @@ const CreateCVScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* CV Visual Area */}
+            {/* Khu vực hiển thị CV trực quan */}
             <ScrollView style={styles.cvContainer} contentContainerStyle={styles.cvContent}>
                 <View style={styles.cvPaper}>
                     {renderLeftColumn()}
@@ -756,14 +756,14 @@ const styles = StyleSheet.create({
     bannerText: { color: '#2E7D32', fontWeight: '500' },
 
     cvContainer: { flex: 1, padding: 16 },
-    cvContent: { paddingBottom: 20 }, // space for bottom bar
+    cvContent: { paddingBottom: 20 }, // khoảng trống cho thanh dưới cùng
     cvPaper: {
         flexDirection: 'row', backgroundColor: COLORS.white,
         borderRadius: 2, overflow: 'hidden', elevation: 3, shadowColor: '#000', shadowOpacity: 0.1,
         minHeight: 600,
     },
 
-    // Left Column (Brownish Theme)
+    // Cột bên trái (Theme màu nâu)
     leftColumn: {
         width: '35%', backgroundColor: '#3E2723', paddingVertical: 20, paddingHorizontal: 12,
     },
@@ -784,7 +784,7 @@ const styles = StyleSheet.create({
     sectionContentLeft: { paddingLeft: 4 },
     whiteText: { color: '#D7CCC8', fontSize: 11, marginBottom: 2 },
 
-    // Right Column
+    // Cột bên phải
     rightColumn: {
         width: '65%', padding: 20, backgroundColor: COLORS.white,
     },

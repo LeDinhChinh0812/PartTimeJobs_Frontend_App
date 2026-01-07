@@ -1,6 +1,6 @@
 /**
- * SearchBar Component
- * Search input with icon and optional filter button
+ * Component SearchBar
+ * Thanh tìm kiếm với icon và nút lọc tùy chọn
  */
 
 import React from 'react';

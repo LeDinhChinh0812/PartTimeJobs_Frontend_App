@@ -1,12 +1,12 @@
 import { apiClient } from './api.service';
 
 /**
- * Chat API Service
- * Handles all chat-related API calls
+ * Dịch vụ API Chat
+ * Xử lý tất cả cuộc gọi API liên quan đến chat
  */
 const chatAPI = {
     /**
-     * Get all conversations for the current user
+     * Lấy tất cả cuộc trò chuyện của người dùng hiện tại
      * @param {number} pageNumber - Page number
      * @param {number} pageSize - Page size
      */
@@ -23,7 +23,7 @@ const chatAPI = {
     },
 
     /**
-     * Get messages for a specific conversation
+     * Lấy tin nhắn của một cuộc trò chuyện cụ thể
      * @param {string} conversationId - ID of the conversation
      * @param {number} pageNumber - Page number
      * @param {number} pageSize - Page size
@@ -42,7 +42,7 @@ const chatAPI = {
     },
 
     /**
-     * Send a message
+     * Gửi tin nhắn
      * @param {string} conversationId - ID of the conversation
      * @param {string} content - Message content
      * @param {string} recipientId - Optional recipient ID
@@ -67,7 +67,7 @@ const chatAPI = {
     },
 
     /**
-     * Create a new conversation
+     * Tạo cuộc trò chuyện mới
      * @param {number} recipientId - ID of the recipient user
      * @param {number} jobPostId - Optional Job Post ID
      */
@@ -90,7 +90,7 @@ const chatAPI = {
     },
 
     /**
-     * Mark messages as read
+     * Đánh dấu tin nhắn là đã đọc
      * @param {string} conversationId - ID of the conversation
      */
     markAsRead: async (conversationId) => {
@@ -106,7 +106,7 @@ const chatAPI = {
     },
 
     /**
-     * Get unread messages count
+     * Lấy số lượng tin nhắn chưa đọc
      */
     getUnreadCount: async () => {
         try {

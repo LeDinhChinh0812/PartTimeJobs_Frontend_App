@@ -1,9 +1,9 @@
 /**
- * Application Constants
- * Centralized constants for the app
+ * Hằng số ứng dụng
+ * Các hằng số tập trung cho ứng dụng
  */
 
-// Work Types
+// Loại công việc
 export const WORK_TYPES = [
     { label: 'Tất cả', value: '' },
     { label: 'Toàn thời gian', value: 'Full-time' },
@@ -13,7 +13,7 @@ export const WORK_TYPES = [
     { label: 'Hợp đồng', value: 'Contract' },
 ];
 
-// Job Categories
+// Danh mục công việc
 export const JOB_CATEGORIES = [
     { label: 'Tất cả', value: '' },
     { label: 'IT & Công nghệ', value: 'IT' },
@@ -28,7 +28,7 @@ export const JOB_CATEGORIES = [
     { label: 'Khác', value: 'Other' },
 ];
 
-// Application Status
+// Trạng thái ứng tuyển
 export const APPLICATION_STATUS = {
     PENDING: 'Pending',
     REVIEWING: 'Reviewing',
@@ -41,7 +41,7 @@ export const APPLICATION_STATUS = {
     EXPIRED: 'Expired',
 };
 
-// Application Status Colors
+// Màu sắc trạng thái ứng tuyển
 export const STATUS_COLORS = {
     'Pending': '#FFA500',        // Orange
     'Reviewing': '#2196F3',      // Blue
@@ -54,7 +54,7 @@ export const STATUS_COLORS = {
     'Expired': '#607D8B',        // Blue Grey
 };
 
-// Application Status Vietnamese
+// Trạng thái ứng tuyển tiếng Việt
 export const STATUS_LABELS = {
     'Pending': 'Đang chờ',
     'Reviewing': 'Đang xem xét',
@@ -68,7 +68,7 @@ export const STATUS_LABELS = {
     'Expired': 'Hết hạn',
 };
 
-// Map ID to Status Name
+// Map ID sang tên trạng thái
 export const STATUS_MAPPING = {
     1: 'Pending',
     2: 'Reviewing',
@@ -81,7 +81,7 @@ export const STATUS_MAPPING = {
     9: 'Expired',
 };
 
-// Salary Periods
+// Chu kỳ lương
 export const SALARY_PERIODS = [
     { label: 'Tháng', value: 'Monthly' },
     { label: 'Giờ', value: 'Hourly' },
@@ -89,14 +89,14 @@ export const SALARY_PERIODS = [
     { label: 'Dự án', value: 'Project' },
 ];
 
-// Gender Options
+// Tùy chọn giới tính
 export const GENDER_OPTIONS = [
     { label: 'Nam', value: 0 },
     { label: 'Nữ', value: 1 },
     { label: 'Khác', value: 2 },
 ];
 
-// Year of Study Options
+// Năm học
 export const YEAR_OF_STUDY_OPTIONS = [
     { label: 'Năm 1', value: 1 },
     { label: 'Năm 2', value: 2 },
@@ -105,7 +105,7 @@ export const YEAR_OF_STUDY_OPTIONS = [
     { label: 'Năm 5', value: 5 },
 ];
 
-// Pagination
+// Phân trang
 export const DEFAULT_PAGE_SIZE = 10;
 export const DEFAULT_PAGE_NUMBER = 1;
 

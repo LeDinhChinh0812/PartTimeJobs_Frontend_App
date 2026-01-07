@@ -1,12 +1,12 @@
 /**
- * Profile API Service
- * Handles all profile-related API calls
+ * Dịch vụ API Hồ sơ
+ * Xử lý các cuộc gọi API liên quan đến hồ sơ
  */
 
 import { apiClient } from './api.service';
 
 /**
- * Get my profile (for logged-in user)
+ * Lấy hồ sơ của tôi (cho người dùng đã đăng nhập)
  * @returns {Promise<object>} User profile data
  */
 export const getMyProfile = async () => {
@@ -19,7 +19,7 @@ export const getMyProfile = async () => {
 };
 
 /**
- * Get profile by ID
+ * Lấy hồ sơ theo ID
  * @param {number} id - Profile ID
  * @returns {Promise<object>} Profile data
  */
@@ -33,7 +33,7 @@ export const getProfileById = async (id) => {
 };
 
 /**
- * Create or update profile
+ * Tạo hoặc cập nhật hồ sơ
  * @param {object} profileData - Profile data to save
  * @returns {Promise<object>} Updated profile
  */
@@ -47,7 +47,7 @@ export const createOrUpdateProfile = async (profileData) => {
 };
 
 /**
- * Delete profile
+ * Xóa hồ sơ
  * @param {number} id - Profile ID
  * @returns {Promise<object>} Deletion response
  */

@@ -1,6 +1,6 @@
 /**
- * JobsListScreen Component
- * Browse, search and filter jobs with real API integration
+ * Component Danh sách việc làm
+ * Duyệt, tìm kiếm và lọc việc làm với tích hợp API thực tế
  */
 
 import React, { useState, useEffect, useCallback } from 'react';
@@ -33,7 +33,7 @@ const JobsListScreen = () => {
     const [hasMore, setHasMore] = useState(true);
     const [error, setError] = useState(null);
 
-    // Search and filter states
+    // Trạng thái tìm kiếm và lọc
     const [searchQuery, setSearchQuery] = useState('');
     const [showFilterModal, setShowFilterModal] = useState(false);
     const [filters, setFilters] = useState({
@@ -45,7 +45,7 @@ const JobsListScreen = () => {
         category: route.params?.filter || '',
     });
 
-    // Debounce search
+    // Tìm kiếm có delay (debounce)
     const [debouncedSearch, setDebouncedSearch] = useState('');
 
     useEffect(() => {
@@ -64,7 +64,7 @@ const JobsListScreen = () => {
                 setLoadingMore(true);
             }
 
-            // Build search params
+            // Xây dựng tham số tìm kiếm
             const hasFilters =
                 debouncedSearch ||
                 filters.keyword ||
@@ -77,23 +77,23 @@ const JobsListScreen = () => {
             let response;
 
             if (hasFilters) {
-                // Use search API with correct parameter names
+                // Sử dụng API tìm kiếm với tên tham số chính xác
                 const searchParams = {
                     SearchTerm: debouncedSearch || filters.keyword || undefined,
                     PageNumber: page,
                     PageSize: DEFAULT_PAGE_SIZE,
-                    SortBy: undefined, // Optional: CreatedDate, Salary, etc.
-                    SortDescending: false, // Optional: true/false
+                    SortBy: undefined, // Tùy chọn: CreatedDate, Salary, v.v.
+                    SortDescending: false, // Tùy chọn: true/false
                 };
 
-                // Remove undefined values to avoid sending them to backend
+                // Loại bỏ các giá trị undefined để tránh gửi lên backend
                 Object.keys(searchParams).forEach(key =>
                     searchParams[key] === undefined && delete searchParams[key]
                 );
 
                 response = await searchJobs(searchParams);
             } else {
-                // Use getAll API
+                // Sử dụng API lấy tất cả
                 response = await getAllJobs(page, DEFAULT_PAGE_SIZE);
             }
 
@@ -127,12 +127,12 @@ const JobsListScreen = () => {
         }
     };
 
-    // Fetch jobs when filters or search changes
+    // Tải việc làm khi thay đổi bộ lọc hoặc tìm kiếm
     useEffect(() => {
         fetchJobs(1);
     }, [debouncedSearch, filters]);
 
-    // Refresh when screen is focused
+    // Làm mới khi màn hình được active
     useFocusEffect(
         useCallback(() => {
             fetchJobs(1);
@@ -188,7 +188,7 @@ const JobsListScreen = () => {
             </View>
 
             <View style={styles.content}>
-                {/* Search Bar */}
+                {/* Thanh tìm kiếm */}
                 <SearchBar
                     placeholder="Tìm kiếm công việc..."
                     value={searchQuery}
@@ -197,7 +197,7 @@ const JobsListScreen = () => {
                     onFilter={handleFilterPress}
                 />
 
-                {/* Active Filters */}
+                {/* Bộ lọc đang áp dụng */}
                 {(searchQuery || filters.category || filters.location || filters.workType || filters.salaryMin || filters.salaryMax) && (
                     <View style={styles.activeFilters}>
                         <View style={styles.filterHeader}>
@@ -279,7 +279,7 @@ const JobsListScreen = () => {
 
 
 
-                {/* Jobs List */}
+                {/* Danh sách việc làm */}
                 <FlatList
                     data={jobs}
                     keyExtractor={(item) => item.id.toString()}
@@ -329,7 +329,7 @@ const JobsListScreen = () => {
                 />
             </View>
 
-            {/* Filter Modal */}
+            {/* Modal lọc */}
             <FilterModal
                 visible={showFilterModal}
                 onClose={() => setShowFilterModal(false)}

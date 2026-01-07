@@ -13,13 +13,13 @@ import { useNavigation } from '@react-navigation/native';
 import { Ionicons } from '@expo/vector-icons';
 import { COLORS, TYPOGRAPHY, SPACING, RADIUS } from '../constants';
 
-// Professional CV Template - Single Template
+// Mẫu CV Chuyên nghiệp - Mẫu đơn
 const CV_TEMPLATES = [
     {
         id: '1',
         name: 'Mẫu CV Chuyên Nghiệp',
         usageCount: '>25.000 CV đã tạo',
-        color: COLORS.accentOrange, // Orange theme
+        color: COLORS.accentOrange, // Theme màu cam
         tags: ['Chuyên nghiệp'],
         mockImage: 'https://marketplace.canva.com/EAFRuCp3DcY/1/0/1131w/canva-black-white-minimalist-cv-resume-f5JNR-K5jjw.jpg'
     }
@@ -29,14 +29,14 @@ const CVTemplatesScreen = () => {
     const navigation = useNavigation();
 
     const handleUseTemplate = (templateId) => {
-        // Navigate to the Editor (CreateCVScreen)
+        // Điều hướng đến trình chỉnh sửa (Màn hình Tạo CV)
         navigation.navigate('CreateCV', { templateId });
     };
 
     const renderTemplateItem = ({ item }) => (
         <View style={styles.card}>
             <View style={styles.cardImageContainer}>
-                {/* Placeholder for template preview - Using a colored view if image fails, but ideally real images */}
+                {/* Placeholder cho xem trước mẫu - Sử dụng view màu nếu ảnh lỗi, nhưng lý tưởng là dùng ảnh thật */}
                 <View style={[styles.cardImagePlaceholder, { backgroundColor: '#F5F5F5' }]}>
                     <Image
                         source={{ uri: item.mockImage }}
@@ -44,7 +44,7 @@ const CVTemplatesScreen = () => {
                         resizeMode="cover"
                     />
                 </View>
-                {/* Overlay Badge */}
+                {/* Huy hiệu phủ lên */}
                 <View style={styles.badgeContainer}>
                     <Text style={styles.badgeText}>{item.tags[0]}</Text>
                 </View>
@@ -56,7 +56,7 @@ const CVTemplatesScreen = () => {
 
                 <View style={styles.colorRow}>
                     <View style={[styles.colorDot, { backgroundColor: item.color }]} />
-                    {/* Dummy color dots */}
+                    {/* Các chấm màu giả */}
                     <View style={[styles.colorDot, { backgroundColor: '#757575' }]} />
                     <View style={[styles.colorDot, { backgroundColor: '#455A64' }]} />
                 </View>
@@ -92,7 +92,7 @@ const CVTemplatesScreen = () => {
                 </TouchableOpacity>
             </View>
 
-            {/* Removed filter section - only one template */}
+            {/* Đã xóa phần bộ lọc - chỉ có một mẫu */}
 
             <FlatList
                 data={CV_TEMPLATES}

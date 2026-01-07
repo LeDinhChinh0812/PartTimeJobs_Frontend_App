@@ -1,6 +1,6 @@
 /**
- * JobCard Component
- * Card displaying job listing information
+ * Component JobCard
+ * Thẻ hiển thị thông tin việc làm
  */
 
 import React from 'react';

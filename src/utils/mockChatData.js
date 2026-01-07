@@ -1,6 +1,6 @@
 /**
- * MOCK DATA FOR TESTING CHAT FEATURES
- * Use this file to test the chat UI without backend
+ * DỮ LIỆU GIẢ LẬP ĐỂ TEST CHAT
+ * Sử dụng file này để test giao diện chat khi không có backend
  */
 
 export const MOCK_CONVERSATIONS = [
@@ -168,7 +168,7 @@ export const MOCK_AI_RESPONSES = {
     },
 };
 
-// Helper function to get mock AI response
+// Hàm hỗ trợ lấy phản hồi AI giả lập
 export const getMockAIResponse = (message) => {
     const lowerMessage = message.toLowerCase();
 
@@ -183,7 +183,7 @@ export const getMockAIResponse = (message) => {
     return MOCK_AI_RESPONSES['default'];
 };
 
-// Export for use in services
+// Xuất để sử dụng trong các dịch vụ
 export default {
     MOCK_CONVERSATIONS,
     MOCK_MESSAGES,

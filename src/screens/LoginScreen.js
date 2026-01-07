@@ -1,6 +1,6 @@
 /**
- * Login Screen
- * Migrated from login.html
+ * Màn hình Đăng nhập
+ * Chuyển đổi từ login.html
  */
 
 import React, { useState } from 'react';
@@ -30,10 +30,10 @@ const LoginScreen = ({ navigation }) => {
     const [loading, setLoading] = useState(false);
 
     const handleLogin = async () => {
-        // Clear previous errors
+        // Xóa lỗi trước đó
         setErrors({});
 
-        // Validate form
+        // Kiểm tra form
         const validation = validateForm({ email, password }, 'login');
         if (!validation.isValid) {
             setErrors(validation.errors);
@@ -46,7 +46,7 @@ const LoginScreen = ({ navigation }) => {
             const response = await login(email, password);
 
             if (response.success) {
-                // Navigation handled by AppNavigator based on auth state
+                // Điều hướng được xử lý bởi AppNavigator dựa trên trạng thái xác thực
             } else {
                 Alert.alert('Error', response.message || 'Login failed');
             }
@@ -76,10 +76,10 @@ const LoginScreen = ({ navigation }) => {
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.formContainer}>
-                        {/* Header */}
+                        {/* Tiêu đề */}
                         <Text style={styles.title}>Welcome Back</Text>
 
-                        {/* Email Input */}
+                        {/* Nhập Email */}
                         <Input
                             label="Email"
                             placeholder="vidu@email.com"
@@ -90,7 +90,7 @@ const LoginScreen = ({ navigation }) => {
                             error={errors.email}
                         />
 
-                        {/* Password Input */}
+                        {/* Nhập Mật khẩu */}
                         <Input
                             label="Password"
                             placeholder="••••••••••"
@@ -101,7 +101,7 @@ const LoginScreen = ({ navigation }) => {
                             error={errors.password}
                         />
 
-                        {/* Remember Me & Forgot Password */}
+                        {/* Ghi nhớ & Quên mật khẩu */}
                         <View style={styles.rowContainer}>
                             <TouchableOpacity
                                 style={styles.checkboxContainer}
@@ -118,7 +118,7 @@ const LoginScreen = ({ navigation }) => {
                             </TouchableOpacity>
                         </View>
 
-                        {/* Login Button */}
+                        {/* Nút Đăng nhập */}
                         <Button
                             variant="primary"
                             onPress={handleLogin}
@@ -128,7 +128,7 @@ const LoginScreen = ({ navigation }) => {
                             LOGIN
                         </Button>
 
-                        {/* Google Sign In Button */}
+                        {/* Nút Đăng nhập Google */}
                         <Button
                             variant="google"
                             onPress={handleGoogleSignIn}
@@ -140,7 +140,7 @@ const LoginScreen = ({ navigation }) => {
                             SIGN IN WITH GOOGLE
                         </Button>
 
-                        {/* Sign Up Link */}
+                        {/* Liên kết Đăng ký */}
                         <View style={styles.footer}>
                             <Text style={styles.footerText}>
                                 You don't have an account yet?{' '}

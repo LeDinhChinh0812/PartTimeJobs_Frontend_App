@@ -1,6 +1,6 @@
 /**
  * ApplyJobScreen
- * Screen for applying to a job
+ * Màn hình ứng tuyển công việc
  */
 
 import React, { useState, useEffect } from 'react';
@@ -36,8 +36,8 @@ const ApplyJobScreen = () => {
     const { user } = useAuth();
 
     const [coverLetter, setCoverLetter] = useState('');
-    const [selectedCVType, setSelectedCVType] = useState('library'); // 'library' or 'upload'
-    const [selectedCV, setSelectedCV] = useState(null); // Selected CV from library
+    const [selectedCVType, setSelectedCVType] = useState('library'); // 'library' hoặc 'upload'
+    const [selectedCV, setSelectedCV] = useState(null); // CV được chọn từ thư viện
     const [uploadedCVUrl, setUploadedCVUrl] = useState('');
     const [loading, setLoading] = useState(false);
     const [errors, setErrors] = useState({});
@@ -45,7 +45,7 @@ const ApplyJobScreen = () => {
     const [profile, setProfile] = useState(null);
     const [localCVUri, setLocalCVUri] = useState(null);
 
-    // Use App Theme Color  
+    // Sử dụng màu chủ đề ứng dụng  
     const PRIMARY_COLOR = COLORS.accentOrange || '#FF8A3C';
 
     useEffect(() => {
@@ -88,16 +88,16 @@ const ApplyJobScreen = () => {
         try {
             setLoading(true);
 
-            // Determine which CV URL to use
+            // Xác định URL CV cần sử dụng
             let cvUrl = '';
             if (selectedCVType === 'upload' && uploadedCVUrl) {
                 cvUrl = uploadedCVUrl;
             } else if (selectedCVType === 'library' && selectedCV) {
-                // selectedCV can be 'created' or uploaded URL
+                // selectedCV có thể là 'created' hoặc URL đã tải lên
                 if (selectedCV === 'created') {
-                    cvUrl = ''; // Use profile
+                    cvUrl = ''; // Sử dụng hồ sơ
                 } else {
-                    cvUrl = selectedCV; // Use uploaded CV URL
+                    cvUrl = selectedCV; // Sử dụng URL CV đã tải lên
                 }
             }
 
@@ -180,7 +180,7 @@ const ApplyJobScreen = () => {
                 behavior={Platform.OS === 'ios' ? 'padding' : 'height'}
                 style={styles.keyboardView}
             >
-                {/* Header */}
+                {/* Tiêu đề */}
                 <View style={styles.header}>
                     <TouchableOpacity
                         onPress={() => navigation.goBack()}
@@ -197,11 +197,11 @@ const ApplyJobScreen = () => {
                     contentContainerStyle={styles.content}
                     showsVerticalScrollIndicator={false}
                 >
-                    {/* CV Application Section */}
+                    {/* Phần ứng tuyển CV */}
                     <View style={styles.section}>
                         <Text style={styles.label}>CV ứng tuyển</Text>
 
-                        {/* CV from Library Option */}
+                        {/* Tùy chọn CV từ thư viện */}
                         <TouchableOpacity
                             style={[
                                 styles.cvOptionCard,
@@ -268,7 +268,7 @@ const ApplyJobScreen = () => {
                             </View>
                         </TouchableOpacity>
 
-                        {/* Upload CV Option */}
+                        {/* Tùy chọn tải lên CV */}
                         <TouchableOpacity
                             style={[
                                 styles.cvOptionCard,
@@ -299,7 +299,7 @@ const ApplyJobScreen = () => {
                         </TouchableOpacity>
                     </View>
 
-                    {/* Cover Letter Section */}
+                    {/* Phần Thư giới thiệu */}
                     <View style={styles.section}>
                         <Text style={styles.label}>
                             Thư giới thiệu <Text style={styles.required}>*</Text>
@@ -329,7 +329,7 @@ const ApplyJobScreen = () => {
                     </View>
                 </ScrollView>
 
-                {/* Submit Button */}
+                {/* Nút Gửi */}
                 <View style={styles.footer}>
                     <TouchableOpacity
                         style={[styles.submitButtonDirect, loading && styles.disabledButton]}
@@ -509,7 +509,7 @@ const styles = StyleSheet.create({
         paddingHorizontal: SPACING.md,
     },
 
-    // Modal Styles
+    // Styles cho Modal
     modalOverlay: {
         flex: 1,
         backgroundColor: 'rgba(0,0,0,0.5)',
