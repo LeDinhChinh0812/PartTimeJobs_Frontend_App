@@ -13,7 +13,7 @@ import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system/legacy';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { COLORS } from '../constants';
-import { createOrUpdateProfile, getMyProfile } from '../services';
+import { createOrUpdateProfile, getMyProfile, uploadFile } from '../services';
 
 const UploadCVScreen = () => {
     const navigation = useNavigation();
@@ -21,6 +21,7 @@ const UploadCVScreen = () => {
     const [fileName, setFileName] = useState('');
     const [fileSize, setFileSize] = useState(null);
     const [fileUri, setFileUri] = useState('');
+    const [fileType, setFileType] = useState('');
 
     const handlePickDocument = async () => {
         try {
@@ -34,6 +35,7 @@ const UploadCVScreen = () => {
                 setFileName(asset.name);
                 setFileUri(asset.uri);
                 setFileSize(asset.size); // bytes
+                setFileType(asset.mimeType);
             }
         } catch (err) {
             console.warn('Error picking document', err);
@@ -44,6 +46,7 @@ const UploadCVScreen = () => {
         setFileName('');
         setFileUri('');
         setFileSize(null);
+        setFileType('');
     };
 
     const formatSize = (bytes) => {
@@ -63,7 +66,50 @@ const UploadCVScreen = () => {
         try {
             setUploading(true);
 
-            // 1. Lấy thông tin hồ sơ hiện tại để bảo toàn dữ liệu
+            // 1. Upload file to backend
+            const fileData = {
+                uri: fileUri,
+                name: fileName,
+                mimeType: fileType
+            };
+
+            console.log('Uploading file:', fileName);
+            const uploadResponse = await uploadFile(fileData);
+            console.log('Upload response:', uploadResponse);
+
+            // Identify URL from response
+            let uploadedUrl = null;
+
+            console.log('Upload Raw Response:', JSON.stringify(uploadResponse));
+
+            if (uploadResponse) {
+                if (typeof uploadResponse === 'string') {
+                    uploadedUrl = uploadResponse;
+                } else if (typeof uploadResponse === 'object') {
+                    // Check common fields at root
+                    if (uploadResponse.filePath) uploadedUrl = uploadResponse.filePath;
+                    else if (uploadResponse.url) uploadedUrl = uploadResponse.url;
+                    else if (uploadResponse.link) uploadedUrl = uploadResponse.link;
+
+                    // Check inside 'data' property (common API pattern)
+                    else if (uploadResponse.data) {
+                        if (typeof uploadResponse.data === 'string') {
+                            uploadedUrl = uploadResponse.data;
+                        } else if (typeof uploadResponse.data === 'object') {
+                            if (uploadResponse.data.filePath) uploadedUrl = uploadResponse.data.filePath;
+                            else if (uploadResponse.data.url) uploadedUrl = uploadResponse.data.url;
+                            else if (uploadResponse.data.link) uploadedUrl = uploadResponse.data.link;
+                        }
+                    }
+                }
+            }
+
+            if (!uploadedUrl) {
+                console.warn('Could not extract URL from response:', uploadResponse);
+                throw new Error('Không nhận được đường dẫn file từ server. (Response format unknown)');
+            }
+
+            // 2. Fetch existing profile to preserve other fields
             let existingParams = {};
             try {
                 const profileRes = await getMyProfile();
@@ -79,37 +125,17 @@ const UploadCVScreen = () => {
                         university: p.university,
                         major: p.major,
                         gpa: p.gpa,
-                        skills: p.skills, // API usually expects [{skillName: '...'}], keep as is
+                        skills: p.skills,
                     };
                 }
             } catch (fetchErr) {
-                console.warn('Could not fetch existing profile, proceeding with partial update', fetchErr);
+                console.warn('Could not fetch existing profile', fetchErr);
             }
 
-            // Lưu file vào bộ nhớ máy để xem được
-            const fileNameClean = fileName.replace(/[^a-zA-Z0-9.-]/g, '_');
-            const localUri = FileSystem.documentDirectory + fileNameClean;
-
-            // Xóa file cũ nếu tồn tại
-            try {
-                await FileSystem.deleteAsync(localUri, { idempotent: true });
-            } catch (e) { /* ignore */ }
-
-            // Copy file vào thư mục ứng dụng
-            await FileSystem.copyAsync({
-                from: fileUri,
-                to: localUri
-            });
-
-            // Lưu đường dẫn vào AsyncStorage để truy xuất sau
-            await AsyncStorage.setItem('LOCAL_CV_URI', localUri);
-
-            // Gửi lên backend (dùng local URI hoặc mock URL tùy backend)
-            const mockUrl = localUri;
-
+            // 3. Update profile with new resumeUrl
             const updatePayload = {
                 ...existingParams,
-                resumeUrl: mockUrl
+                resumeUrl: uploadedUrl
             };
 
             const response = await createOrUpdateProfile(updatePayload);
@@ -119,12 +145,12 @@ const UploadCVScreen = () => {
                     { text: 'OK', onPress: () => navigation.navigate('MyCV') }
                 ]);
             } else {
-                throw new Error(response.message || 'Upload failed');
+                throw new Error(response.message || 'Update profile failed');
             }
 
         } catch (err) {
-            console.error('Upload Error:', err);
-            Alert.alert('Lỗi', 'Không thể tải lên CV lúc này.');
+            console.error('Upload Process Error:', err);
+            Alert.alert('Lỗi', `Không thể tải lên CV. ${(err.message || '')}`);
         } finally {
             setUploading(false);
         }

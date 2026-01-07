@@ -6,3 +6,4 @@ export * from './profile.api';
 export { default as chatAPI } from './chat.api';
 export { default as chatbotAPI } from './chatbot.api';
 export { default as signalRService } from './signalr.service';
+export * from './file.api';
